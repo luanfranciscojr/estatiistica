@@ -1,0 +1,15 @@
+.git
+.github
+node_modules
+dist
+.DS_Store
+.env
+.env.*
+coverage
+apps/api/.env
+apps/api/.env.*
+apps/api/dist
+apps/api/node_modules
+apps/web/.next
+apps/web/dist
+apps/web/node_modules
