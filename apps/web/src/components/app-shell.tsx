@@ -136,7 +136,7 @@ export function AppShell() {
                 ? 'Operação Local Nova Teens'
                 : 'Operação Local SENIB'}
           </p>
-          <h1>Estatísticas SENIB</h1>
+          <h1>Estatística</h1>
         </div>
         <div className="topbar-actions">
           <div className="user-badge" aria-label="Usuario autenticado">
