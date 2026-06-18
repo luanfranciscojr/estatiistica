@@ -171,10 +171,10 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   const chartBars = (payload?.ranking_materias ?? []).slice(0, 8);
   const maxBarValue = Math.max(...chartBars.map((item) => item.media), 1);
   const compositionEntries = [
-    { key: 'alunos', label: 'Alunos', value: totalAlunos, color: '#66d9ff' },
-    { key: 'verdinhos', label: 'Verdinhos', value: totalVerdinhos, color: '#74dda3' },
-    { key: 'amarelinhos', label: 'Amarelinhos', value: totalAmarelinhos, color: '#ffca49' },
-    { key: 'professor', label: 'Professores', value: totalProfessores, color: '#a78bfa' },
+    { key: 'alunos', label: 'Alunos', value: totalAlunos, color: '#4ea84d' },
+    { key: 'verdinhos', label: 'Verdinhos', value: totalVerdinhos, color: '#7cc66f' },
+    { key: 'amarelinhos', label: 'Amarelinhos', value: totalAmarelinhos, color: '#d8bf58' },
+    { key: 'professor', label: 'Professores', value: totalProfessores, color: '#8fad8f' },
   ];
   const donutStyle = {
     backgroundImage: buildCompositionGradient(compositionEntries),
@@ -452,51 +452,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
             )}
           </article>
 
-          <article className="dashboard-analytic-panel">
-            <header className="dashboard-panel-head">
-              <div>
-                <h3>Ranking de Salas</h3>
-                <p>{payload?.ultima_rodada?.referencia ?? 'Sem rodada consolidada'}</p>
-              </div>
-              <span className="dashboard-chip">{payload?.ultima_rodada ? formatSessaoLabel(payload.ultima_rodada.sessao_senib) : 'Sem sessao'}</span>
-            </header>
-            {leadingSala ? (
-              <div className="dashboard-ranking-highlight">
-                <span>Líder da rodada</span>
-                <strong>{leadingSala.sala}</strong>
-                <small>{formatNumber(leadingSala.media)} presenças consolidadas</small>
-              </div>
-            ) : null}
-            {hasSalaRanking ? (
-              <ul className="dashboard-ranking-list">
-                {rankingTop.map((item, index) => (
-                  <li key={item.sala}>
-                    <div className="dashboard-ranking-copy">
-                      <span className="dashboard-ranking-position">{index + 1}</span>
-                      <div>
-                        <strong>{item.sala}</strong>
-                        <small>Média local consolidada</small>
-                      </div>
-                    </div>
-                    <div className="dashboard-ranking-track">
-                      <div
-                        className="dashboard-ranking-fill"
-                        style={{ width: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
-                      />
-                    </div>
-                    <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="dashboard-empty-state dashboard-empty-state-ranking">
-                <strong>Nenhuma sala consolidada</strong>
-                <p>O ranking aparece quando existir uma rodada ativa com presença registrada.</p>
-              </div>
-            )}
-          </article>
-
-          <article className="dashboard-analytic-panel">
+          <article className="dashboard-analytic-panel dashboard-analytic-panel-wide">
             <header className="dashboard-panel-head">
               <div>
                 <h3>Ranking de Matérias</h3>
@@ -546,6 +502,50 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               <div className="dashboard-empty-state dashboard-empty-state-ranking">
                 <strong>Nenhuma matéria consolidada</strong>
                 <p>O ranking de matérias aparece quando a rodada tiver leituras lançadas.</p>
+              </div>
+            )}
+          </article>
+
+          <article className="dashboard-analytic-panel">
+            <header className="dashboard-panel-head">
+              <div>
+                <h3>Ranking de Salas</h3>
+                <p>{payload?.ultima_rodada?.referencia ?? 'Sem rodada consolidada'}</p>
+              </div>
+              <span className="dashboard-chip">{payload?.ultima_rodada ? formatSessaoLabel(payload.ultima_rodada.sessao_senib) : 'Sem sessao'}</span>
+            </header>
+            {leadingSala ? (
+              <div className="dashboard-ranking-highlight">
+                <span>Líder da rodada</span>
+                <strong>{leadingSala.sala}</strong>
+                <small>{formatNumber(leadingSala.media)} presenças consolidadas</small>
+              </div>
+            ) : null}
+            {hasSalaRanking ? (
+              <ul className="dashboard-ranking-list">
+                {rankingTop.map((item, index) => (
+                  <li key={item.sala}>
+                    <div className="dashboard-ranking-copy">
+                      <span className="dashboard-ranking-position">{index + 1}</span>
+                      <div>
+                        <strong>{item.sala}</strong>
+                        <small>Média local consolidada</small>
+                      </div>
+                    </div>
+                    <div className="dashboard-ranking-track">
+                      <div
+                        className="dashboard-ranking-fill"
+                        style={{ width: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
+                      />
+                    </div>
+                    <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="dashboard-empty-state dashboard-empty-state-ranking">
+                <strong>Nenhuma sala consolidada</strong>
+                <p>O ranking aparece quando existir uma rodada ativa com presença registrada.</p>
               </div>
             )}
           </article>
