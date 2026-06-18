@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+.env
+.env.*
+coverage
+apps/api/prisma/dev.db
+apps/api/prisma/dev.db-journal
+apps/web/dist
+apps/api/dist

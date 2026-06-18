@@ -1,0 +1,16 @@
+{
+  "name": "estatisticas-senib",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "build": "npm run build -w @estatisticas-senib/api && npm run build -w @estatisticas-senib/web",
+    "dev:api": "npm run start:dev -w @estatisticas-senib/api",
+    "dev:web": "npm run dev -w @estatisticas-senib/web",
+    "prisma:generate": "npm run prisma:generate -w @estatisticas-senib/api",
+    "prisma:migrate:dev": "npm run prisma:migrate:dev -w @estatisticas-senib/api"
+  }
+}

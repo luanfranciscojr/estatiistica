@@ -1,0 +1,508 @@
+{
+  "info": {
+    "name": "Estatisticas SENIB",
+    "_postman_id": "c6e0eb89-b917-4834-9a9a-f2de433c9b71",
+    "description": "Collection para testar a API local do sistema Estatisticas SENIB e as rotas legadas da NIB.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "local_base_url",
+      "value": "http://127.0.0.1:3001/api"
+    },
+    {
+      "key": "web_base_url",
+      "value": "http://localhost:5173"
+    },
+    {
+      "key": "local_login",
+      "value": "admin"
+    },
+    {
+      "key": "local_senha",
+      "value": "admin123"
+    },
+    {
+      "key": "nib_base_url",
+      "value": "http://api.cadastro.nib.org.br"
+    },
+    {
+      "key": "nib_usuario",
+      "value": "matricula@ntb.org.br"
+    },
+    {
+      "key": "nib_senha",
+      "value": "admin@NIB$"
+    },
+    {
+      "key": "nib_token",
+      "value": ""
+    },
+    {
+      "key": "rodada_referencia",
+      "value": "2026/03"
+    },
+    {
+      "key": "rodada_id",
+      "value": "2818"
+    }
+  ],
+  "item": [
+    {
+      "name": "API Local",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/health",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{local_login}}\",\n  \"senha\": \"{{local_senha}}\"\n}"
+            },
+            "url": {
+              "raw": "{{local_base_url}}/auth/login",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Auth - Session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/auth/session",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "auth",
+                "session"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Auth - Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/auth/logout",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dashboard - Sessao 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/dashboard?sessao_senib=1",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "sessao_senib",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dashboard - Sessao 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/dashboard?sessao_senib=2",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "sessao_senib",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rodadas - Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/rodadas",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "rodadas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importacao NIB - Rodadas Disponiveis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/importacoes/nib/rodadas-disponiveis",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "importacoes",
+                "nib",
+                "rodadas-disponiveis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importacao NIB - Rodada Detalhe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/importacoes/nib/rodada-detalhe?referencia={{rodada_referencia}}",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "importacoes",
+                "nib",
+                "rodada-detalhe"
+              ],
+              "query": [
+                {
+                  "key": "referencia",
+                  "value": "{{rodada_referencia}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importacao NIB - Rodada Por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/importacoes/nib/rodadas/{{rodada_id}}",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "importacoes",
+                "nib",
+                "rodadas",
+                "{{rodada_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importacao NIB - Diagnostico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local_base_url}}/importacoes/nib/diagnostico",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "importacoes",
+                "nib",
+                "diagnostico"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importacao NIB - Importar Rodada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"external_id\": \"{{rodada_referencia}}\",\n  \"selected_aulas\": [\n    \"24/05/2026\",\n    \"31/05/2026\",\n    \"07/06/2026\",\n    \"14/06/2026\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{local_base_url}}/importacoes/nib/rodadas",
+              "host": [
+                "{{local_base_url}}"
+              ],
+              "path": [
+                "importacoes",
+                "nib",
+                "rodadas"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "NIB Legado",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const payload = pm.response.json();",
+                  "pm.collectionVariables.set('nib_token', payload.access_token || payload.token || payload.bearerToken || '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"{{nib_usuario}}\",\n  \"senha\": \"{{nib_senha}}\"\n}"
+            },
+            "url": {
+              "raw": "{{nib_base_url}}/v2/login",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rodada Materias Andamento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{nib_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nib_base_url}}/v2/senib/rodada_materias_andamento",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "senib",
+                "rodada_materias_andamento"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rodada Materias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{nib_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nib_base_url}}/v2/senib/rodada_materias?limit=1000",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "senib",
+                "rodada_materias"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1000"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rodada Materias Por ID Rodada",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{nib_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nib_base_url}}/v2/senib/rodada_materias?q=%7B%22id_rodada%22%3A{{rodada_id}}%7D&limit=1000",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "senib",
+                "rodada_materias"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{\"id_rodada\":{{rodada_id}}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "1000"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rodada Materia Frequencias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{nib_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nib_base_url}}/v2/senib/rodada_materia_frequencias?id_rodada_materia={{rodada_id}}",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "senib",
+                "rodada_materia_frequencias"
+              ],
+              "query": [
+                {
+                  "key": "id_rodada_materia",
+                  "value": "{{rodada_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rodada Materia Notas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{nib_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nib_base_url}}/v2/senib/rodada_materia_notas?id_rodada_materia={{rodada_id}}",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "senib",
+                "rodada_materia_notas"
+              ],
+              "query": [
+                {
+                  "key": "id_rodada_materia",
+                  "value": "{{rodada_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Historico Materias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{nib_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{nib_base_url}}/v2/senib/historico_materias",
+              "host": [
+                "{{nib_base_url}}"
+              ],
+              "path": [
+                "v2",
+                "senib",
+                "historico_materias"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

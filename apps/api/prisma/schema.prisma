@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleCode {
+  admin
+  estatistica
+  verdinho
+  pastor
+}
+
+enum RodadaOrigem {
+  api_nib
+  manual
+}
+
+enum RodadaStatus {
+  rascunho
+  ativa
+  encerrada
+  bloqueada
+}
+
+enum ImportacaoFonte {
+  api_nib
+  manual
+  texto
+}
+
+enum ImportacaoStatus {
+  sucesso
+  erro
+  cancelada
+  pendente_confirmacao
+}
+
+enum CultoStatus {
+  ativa
+  encerrada
+}
+
+enum CategoriaContagem {
+  alunos
+  verdinhos
+  amarelinhos
+  professor
+}
+
+enum OperacaoContagem {
+  incremento
+  decremento
+  ajuste
+}
+
+model User {
+  id           Int              @id @default(autoincrement())
+  login        String           @unique @db.VarChar(120)
+  passwordHash String           @db.VarChar(255)
+  nome         String           @db.VarChar(160)
+  ativo        Boolean          @default(true)
+  roles        UserRole[]
+  rodadas      Rodada[]
+  contagens    Contagem[]
+  eventos      ContagemEvento[]
+  auditorias   Auditoria[]
+  importacoes  Importacao[]
+  sessions     UserSession[]
+  cultosCriados Culto[]         @relation("CultoCreatedBy")
+  cultosAtualizados Culto[]     @relation("CultoUpdatedBy")
+  novaTeensCriados NovaTeens[]  @relation("NovaTeensCreatedBy")
+  novaTeensAtualizados NovaTeens[] @relation("NovaTeensUpdatedBy")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Role {
+  id        Int        @id @default(autoincrement())
+  code      RoleCode   @unique
+  nome      String     @db.VarChar(120)
+  users     UserRole[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model UserSession {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @db.VarChar(191)
+  expiresAt DateTime
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, expiresAt])
+}
+
+model Rodada {
+  id              Int             @id @default(autoincrement())
+  externalId      String?         @unique @db.VarChar(191)
+  referencia      String          @db.VarChar(191)
+  titulo          String?         @db.VarChar(191)
+  turno           String          @db.VarChar(80)
+  origem          RodadaOrigem
+  status          RodadaStatus    @default(rascunho)
+  ativa           Boolean         @default(false)
+  dataInicio      DateTime?
+  dataFim         DateTime?
+  importedAt      DateTime?
+  createdByUserId Int?
+  createdByUser   User?           @relation(fields: [createdByUserId], references: [id])
+  materias        RodadaMateria[]
+  salas           Sala[]
+  contagens       Contagem[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([ativa, status])
+}
+
+model RodadaMateria {
+  id               Int          @id @default(autoincrement())
+  rodadaId         Int
+  externalId       String?      @unique @db.VarChar(191)
+  externalRodadaId String?      @db.VarChar(191)
+  materia          String       @db.VarChar(191)
+  sala             String       @db.VarChar(191)
+  local            String?      @db.VarChar(191)
+  sessaoSenib      Int          @default(1)
+  sessao           String?      @db.VarChar(120)
+  turno            String?      @db.VarChar(80)
+  professoresJson  Json
+  status           String       @db.VarChar(80)
+  origem           RodadaOrigem
+  datasAulasJson   Json?
+  rodada           Rodada       @relation(fields: [rodadaId], references: [id], onDelete: Cascade)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([rodadaId, sala, sessaoSenib])
+}
+
+model Sala {
+  id         Int        @id @default(autoincrement())
+  rodadaId   Int
+  codigo     String     @db.VarChar(120)
+  nome       String     @db.VarChar(191)
+  local      String?    @db.VarChar(191)
+  sessaoSenib  Int       @default(1)
+  turno      String     @db.VarChar(80)
+  rodada     Rodada     @relation(fields: [rodadaId], references: [id], onDelete: Cascade)
+  contagens  Contagem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([rodadaId, codigo, sessaoSenib])
+}
+
+model Contagem {
+  id              Int              @id @default(autoincrement())
+  rodadaId        Int
+  salaId          Int
+  aulaRef         String           @default("consolidado") @db.VarChar(40)
+  alunos          Int              @default(0)
+  verdinhos       Int              @default(0)
+  amarelinhos     Int              @default(0)
+  professor       Int              @default(0)
+  total           Int              @default(0)
+  updatedByUserId Int?
+  rodada          Rodada           @relation(fields: [rodadaId], references: [id], onDelete: Cascade)
+  sala            Sala             @relation(fields: [salaId], references: [id], onDelete: Cascade)
+  updatedByUser   User?            @relation(fields: [updatedByUserId], references: [id])
+  eventos         ContagemEvento[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([rodadaId, salaId, aulaRef])
+  @@index([rodadaId, aulaRef])
+}
+
+model ContagemEvento {
+  id            Int               @id @default(autoincrement())
+  contagemId    Int
+  categoria     CategoriaContagem
+  operacao      OperacaoContagem
+  valorAnterior Int
+  valorAtual    Int
+  userId        Int?
+  contagem      Contagem          @relation(fields: [contagemId], references: [id], onDelete: Cascade)
+  user          User?             @relation(fields: [userId], references: [id])
+  createdAt     DateTime          @default(now())
+}
+
+model Culto {
+  id              Int         @id @default(autoincrement())
+  dataReferencia  DateTime    @db.Date
+  ordem           Int
+  nome            String      @db.VarChar(80)
+  total           Int         @default(0)
+  status          CultoStatus @default(ativa)
+  createdByUserId Int?
+  updatedByUserId Int?
+  createdByUser   User?       @relation("CultoCreatedBy", fields: [createdByUserId], references: [id])
+  updatedByUser   User?       @relation("CultoUpdatedBy", fields: [updatedByUserId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([dataReferencia, ordem])
+  @@index([dataReferencia, status])
+}
+
+model NovaTeens {
+  id              Int         @id @default(autoincrement())
+  dataReferencia  DateTime    @db.Date
+  ordem           Int
+  nome            String      @db.VarChar(80)
+  teens           Int         @default(0)
+  lideres         Int         @default(0)
+  total           Int         @default(0)
+  status          CultoStatus @default(ativa)
+  createdByUserId Int?
+  updatedByUserId Int?
+  createdByUser   User?       @relation("NovaTeensCreatedBy", fields: [createdByUserId], references: [id])
+  updatedByUser   User?       @relation("NovaTeensUpdatedBy", fields: [updatedByUserId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([dataReferencia, ordem])
+  @@index([dataReferencia, status])
+}
+
+model Importacao {
+  id                Int               @id @default(autoincrement())
+  fonte             ImportacaoFonte
+  externalReference String?           @db.VarChar(191)
+  status            ImportacaoStatus
+  payloadResumoJson Json?
+  erro              String?           @db.Text
+  executedByUserId  Int?
+  executedByUser    User?             @relation(fields: [executedByUserId], references: [id])
+  createdAt         DateTime          @default(now())
+}
+
+model Auditoria {
+  id          Int       @id @default(autoincrement())
+  actorUserId Int?
+  acao        String    @db.VarChar(160)
+  entidade    String    @db.VarChar(160)
+  entidadeId  String?   @db.VarChar(191)
+  payloadJson Json?
+  actorUser   User?     @relation(fields: [actorUserId], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([entidade, entidadeId, createdAt])
+}
