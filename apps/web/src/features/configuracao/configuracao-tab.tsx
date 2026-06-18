@@ -373,10 +373,15 @@ export function ConfiguracaoTab({
                             className="selection-button"
                             onClick={async () => {
                               try {
-                                const payload = await apiFetch<NibRodadaByReferencePayload>(
-                                  `/importacoes/nib/rodada-detalhe?referencia=${encodeURIComponent(rodada.referencia)}`,
-                                  { headers: {} },
-                                );
+                                const payload = rodada.nib_rodada_id
+                                  ? await apiFetch<NibRodadaByIdPayload>(
+                                      `/importacoes/nib/rodadas/${rodada.nib_rodada_id}`,
+                                      { headers: {} },
+                                    )
+                                  : await apiFetch<NibRodadaByReferencePayload>(
+                                      `/importacoes/nib/rodada-detalhe?referencia=${encodeURIComponent(rodada.referencia)}`,
+                                      { headers: {} },
+                                    );
                                 if (!payload.rodada) {
                                   throw new Error(
                                     'Nenhuma matéria retornada para a rodada selecionada.',

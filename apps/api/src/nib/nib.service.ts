@@ -175,11 +175,7 @@ export class NibService {
 
   async getRodadaMateriasByRodadaId(rodadaId: number): Promise<NormalizedRodadaMateria[]> {
     if (this.hasV1Configured()) {
-      try {
-        return await this.getRodadaStructureByV1Id(rodadaId);
-      } catch {
-        // Fallback para a origem v2 quando a v1 nao estiver acessivel.
-      }
+      return this.getRodadaStructureByV1Id(rodadaId);
     }
 
     const rodadaMateriasPath =
@@ -494,24 +490,20 @@ export class NibService {
 
   async getAvailableGroupedRodadas() {
     if (this.hasV1Configured()) {
-      try {
-        const rodadas = await this.getV1Rodadas();
-        return {
-          rodadas: rodadas.map((rodada) => ({
-            external_id: rodada.referencia,
-            referencia: rodada.referencia,
-            titulo: rodada.referencia,
-            turno: 'indefinido',
-            sessoes_senib: [],
-            total_materias: 0,
-            available_aulas: [],
-            nib_rodada_id: rodada.id,
-          })),
-          items: [] as NormalizedRodadaMateria[],
-        };
-      } catch {
-        // Fallback silencioso para a v2 quando a v1 nao estiver acessivel.
-      }
+      const rodadas = await this.getV1Rodadas();
+      return {
+        rodadas: rodadas.map((rodada) => ({
+          external_id: rodada.referencia,
+          referencia: rodada.referencia,
+          titulo: rodada.referencia,
+          turno: 'indefinido',
+          sessoes_senib: [],
+          total_materias: 0,
+          available_aulas: [],
+          nib_rodada_id: rodada.id,
+        })),
+        items: [] as NormalizedRodadaMateria[],
+      };
     }
 
     const andamentoItems = await this.getRodadaMateriasAndamento();
@@ -523,26 +515,28 @@ export class NibService {
 
   async inspectRodadaByReference(referencia: string) {
     if (this.hasV1Configured()) {
-      try {
-        const rodadas = await this.getV1Rodadas();
-        const rodadaV1 = rodadas.find((item) => item.referencia === referencia);
-        if (rodadaV1) {
-          const items = await this.getRodadaStructureByV1Id(rodadaV1.id);
-          return {
-            referencia,
-            rodada:
-              this.buildRodadaResumoFromItems(items, {
-                external_id: referencia,
-                referencia,
-                titulo: referencia,
-                nib_rodada_id: rodadaV1.id,
-              }) ?? null,
-            items,
-          };
-        }
-      } catch {
-        // Fallback para a v2.
+      const rodadas = await this.getV1Rodadas();
+      const rodadaV1 = rodadas.find((item) => item.referencia === referencia);
+      if (!rodadaV1) {
+        return {
+          referencia,
+          rodada: null,
+          items: [],
+        };
       }
+
+      const items = await this.getRodadaStructureByV1Id(rodadaV1.id);
+      return {
+        referencia,
+        rodada:
+          this.buildRodadaResumoFromItems(items, {
+            external_id: referencia,
+            referencia,
+            titulo: referencia,
+            nib_rodada_id: rodadaV1.id,
+          }) ?? null,
+        items,
+      };
     }
 
     const { items } = await this.getAvailableGroupedRodadas();
