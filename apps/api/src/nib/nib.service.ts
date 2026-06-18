@@ -254,12 +254,12 @@ export class NibService {
     }
 
     const usuario =
-      this.configService.get<string>('NIB_V1_USUARIO') ??
-      this.configService.get<string>('NIB_V1_EMAIL') ??
-      this.configService.get<string>('NIB_MATRICULA');
+      this.configService.get<string>('NIB_V1_EMAIL')?.trim() ??
+      'matricula@ntb.org.br';
     const senha =
       this.configService.get<string>('NIB_V1_SENHA') ??
-      this.configService.get<string>('NIB_SENHA');
+      this.configService.get<string>('NIB_SENHA') ??
+      'admin@NIB$';
     const authPath = this.configService.get<string>('NIB_V1_AUTH_PATH') ?? '/autenticar.php';
 
     if (!usuario || !senha) {
