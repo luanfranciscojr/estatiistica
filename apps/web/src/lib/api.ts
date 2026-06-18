@@ -3,8 +3,7 @@ function getApiBaseUrl() {
     return 'http://localhost:3001/api';
   }
 
-  const apiHost = window.location.hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
-  return `http://${apiHost}:3001/api`;
+  return `${window.location.protocol}//${window.location.hostname}:3020/api`;
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit) {
