@@ -1082,6 +1082,40 @@ th {
   background: linear-gradient(180deg, rgba(29, 36, 62, 0.84), rgba(22, 28, 49, 0.82));
 }
 
+.dashboard-empty-state {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  min-height: 220px;
+  padding: 24px;
+  border-radius: 26px;
+  border: 1px dashed rgba(137, 154, 214, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(115, 230, 255, 0.08), transparent 42%),
+    rgba(11, 17, 32, 0.42);
+}
+
+.dashboard-empty-state strong {
+  font-size: 1.2rem;
+  line-height: 1.15;
+}
+
+.dashboard-empty-state p {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--color-soft);
+  line-height: 1.45;
+}
+
+.dashboard-empty-state-chart {
+  min-height: 214px;
+}
+
+.dashboard-empty-state-composition,
+.dashboard-empty-state-ranking {
+  min-height: 240px;
+}
+
 .dashboard-analytic-panel-wide {
   flex-basis: 58%;
 }

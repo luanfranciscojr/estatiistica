@@ -253,8 +253,13 @@ export class NibService {
       return this.v1IgrejaCache.idIgreja;
     }
 
-    const usuario = this.configService.get<string>('NIB_MATRICULA');
-    const senha = this.configService.get<string>('NIB_SENHA');
+    const usuario =
+      this.configService.get<string>('NIB_V1_USUARIO') ??
+      this.configService.get<string>('NIB_V1_EMAIL') ??
+      this.configService.get<string>('NIB_MATRICULA');
+    const senha =
+      this.configService.get<string>('NIB_V1_SENHA') ??
+      this.configService.get<string>('NIB_SENHA');
     const authPath = this.configService.get<string>('NIB_V1_AUTH_PATH') ?? '/autenticar.php';
 
     if (!usuario || !senha) {
@@ -344,7 +349,7 @@ export class NibService {
     const materiasPath =
       this.configService.get<string>('NIB_V1_MATERIAS_PATH') ??
       '/senib/rodada_materia_consultar.php';
-    const sessions = [1, 2, 3, 4];
+    const sessions = [1, 2];
     const batches = await Promise.all(
       sessions.map(async (sessaoSenib) => {
         const xml = await this.fetchV1Text(

@@ -1516,10 +1516,6 @@ function ConfiguracaoTab({ user, operation }) {
                                                             /*#__PURE__*/ jsx_runtime_.jsx("option", {
                                                                 value: 2,
                                                                 children: "2\xba SENIB"
-                                                            }),
-                                                            /*#__PURE__*/ jsx_runtime_.jsx("option", {
-                                                                value: 3,
-                                                                children: "3\xba SENIB"
                                                             })
                                                         ]
                                                     })
@@ -2987,6 +2983,10 @@ function DashboardTab({ operation }) {
     const rankingMateriasTop = (payload?.ranking_materias ?? []).slice(0, 5);
     const leadingSala = rankingTop[0];
     const leadingMateria = rankingMateriasTop[0];
+    const hasCompositionData = totalAtual > 0;
+    const hasChartData = chartBars.length > 0;
+    const hasSalaRanking = rankingTop.length > 0;
+    const hasMateriaRanking = rankingMateriasTop.length > 0;
     const totalEquipes = totalVerdinhos + totalAmarelinhos + totalProfessores;
     return /*#__PURE__*/ jsx_runtime_.jsx("section", {
         className: "layout-grid",
@@ -3086,15 +3086,6 @@ function DashboardTab({ operation }) {
                                                 setAulaRef("");
                                             },
                                             children: "2\xba SENIB"
-                                        }),
-                                        /*#__PURE__*/ jsx_runtime_.jsx("button", {
-                                            type: "button",
-                                            className: sessaoSenib === "3" ? "tab-active" : "tab-button",
-                                            onClick: ()=>{
-                                                setSessaoSenib("3");
-                                                setAulaRef("");
-                                            },
-                                            children: "3\xba SENIB"
                                         }),
                                         /*#__PURE__*/ jsx_runtime_.jsx("button", {
                                             type: "button",
@@ -3206,7 +3197,7 @@ function DashboardTab({ operation }) {
                                         })
                                     ]
                                 }),
-                                /*#__PURE__*/ jsx_runtime_.jsx("div", {
+                                hasChartData ? /*#__PURE__*/ jsx_runtime_.jsx("div", {
                                     className: "dashboard-bar-chart",
                                     children: chartBars.map((item)=>/*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
                                             className: "dashboard-bar-group",
@@ -3225,6 +3216,16 @@ function DashboardTab({ operation }) {
                                                 })
                                             ]
                                         }, item.materia))
+                                }) : /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
+                                    className: "dashboard-empty-state dashboard-empty-state-chart",
+                                    children: [
+                                        /*#__PURE__*/ jsx_runtime_.jsx("strong", {
+                                            children: "Nenhuma mat\xe9ria consolidada ainda"
+                                        }),
+                                        /*#__PURE__*/ jsx_runtime_.jsx("p", {
+                                            children: "Importe ou ative uma rodada para visualizar as mat\xe9rias com maior presen\xe7a neste recorte."
+                                        })
+                                    ]
                                 })
                             ]
                         }),
@@ -3354,7 +3355,7 @@ function DashboardTab({ operation }) {
                                         })
                                     ]
                                 }),
-                                /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
+                                hasCompositionData ? /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
                                     className: "dashboard-composition-layout",
                                     children: [
                                         /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
@@ -3384,7 +3385,7 @@ function DashboardTab({ operation }) {
                                                                     children: "Predomin\xe2ncia"
                                                                 }),
                                                                 /*#__PURE__*/ jsx_runtime_.jsx("strong", {
-                                                                    children: totalAtual ? `${Math.round(totalAlunos / totalAtual * 100)}%` : "0%"
+                                                                    children: `${Math.round(totalAlunos / totalAtual * 100)}%`
                                                                 }),
                                                                 /*#__PURE__*/ jsx_runtime_.jsx("small", {
                                                                     children: "Alunos no total consolidado"
@@ -3411,7 +3412,7 @@ function DashboardTab({ operation }) {
                                         /*#__PURE__*/ jsx_runtime_.jsx("ul", {
                                             className: "dashboard-composition-list",
                                             children: compositionEntries.map((item)=>{
-                                                const percentage = totalAtual ? Math.round(item.value / totalAtual * 100) : 0;
+                                                const percentage = Math.round(item.value / totalAtual * 100);
                                                 return /*#__PURE__*/ (0,jsx_runtime_.jsxs)("li", {
                                                     children: [
                                                         /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
@@ -3449,6 +3450,16 @@ function DashboardTab({ operation }) {
                                                     ]
                                                 }, item.key);
                                             })
+                                        })
+                                    ]
+                                }) : /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
+                                    className: "dashboard-empty-state dashboard-empty-state-composition",
+                                    children: [
+                                        /*#__PURE__*/ jsx_runtime_.jsx("strong", {
+                                            children: "Sem leitura consolidada"
+                                        }),
+                                        /*#__PURE__*/ jsx_runtime_.jsx("p", {
+                                            children: "Assim que a presen\xe7a for lan\xe7ada no painel, a composi\xe7\xe3o por categoria aparece aqui."
                                         })
                                     ]
                                 })
@@ -3493,7 +3504,7 @@ function DashboardTab({ operation }) {
                                         })
                                     ]
                                 }) : null,
-                                /*#__PURE__*/ jsx_runtime_.jsx("ul", {
+                                hasSalaRanking ? /*#__PURE__*/ jsx_runtime_.jsx("ul", {
                                     className: "dashboard-ranking-list",
                                     children: rankingTop.map((item, index)=>/*#__PURE__*/ (0,jsx_runtime_.jsxs)("li", {
                                             children: [
@@ -3531,6 +3542,16 @@ function DashboardTab({ operation }) {
                                                 })
                                             ]
                                         }, item.sala))
+                                }) : /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
+                                    className: "dashboard-empty-state dashboard-empty-state-ranking",
+                                    children: [
+                                        /*#__PURE__*/ jsx_runtime_.jsx("strong", {
+                                            children: "Nenhuma sala consolidada"
+                                        }),
+                                        /*#__PURE__*/ jsx_runtime_.jsx("p", {
+                                            children: "O ranking aparece quando existir uma rodada ativa com presen\xe7a registrada."
+                                        })
+                                    ]
                                 })
                             ]
                         }),
@@ -3573,7 +3594,7 @@ function DashboardTab({ operation }) {
                                         })
                                     ]
                                 }) : null,
-                                /*#__PURE__*/ jsx_runtime_.jsx("ul", {
+                                hasMateriaRanking ? /*#__PURE__*/ jsx_runtime_.jsx("ul", {
                                     className: "dashboard-ranking-list",
                                     children: rankingMateriasTop.map((item, index)=>/*#__PURE__*/ (0,jsx_runtime_.jsxs)("li", {
                                             children: [
@@ -3611,6 +3632,16 @@ function DashboardTab({ operation }) {
                                                 })
                                             ]
                                         }, item.materia))
+                                }) : /*#__PURE__*/ (0,jsx_runtime_.jsxs)("div", {
+                                    className: "dashboard-empty-state dashboard-empty-state-ranking",
+                                    children: [
+                                        /*#__PURE__*/ jsx_runtime_.jsx("strong", {
+                                            children: "Nenhuma mat\xe9ria consolidada"
+                                        }),
+                                        /*#__PURE__*/ jsx_runtime_.jsx("p", {
+                                            children: "O ranking de mat\xe9rias aparece quando a rodada tiver leituras lan\xe7adas."
+                                        })
+                                    ]
                                 })
                             ]
                         })
@@ -5417,7 +5448,7 @@ module.exports = __webpack_require__(6944)
 var __webpack_require__ = require("../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, [471,11,993], () => (__webpack_exec__(7283)));
+var __webpack_exports__ = __webpack_require__.X(0, [471,11,269], () => (__webpack_exec__(7283)));
 module.exports = __webpack_exports__;
 
 })();

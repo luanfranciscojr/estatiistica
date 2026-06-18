@@ -1,5 +1,5 @@
 {
-  "/page": "/",
   "/manifest.webmanifest/route": "/manifest.webmanifest",
+  "/page": "/",
   "/offline/page": "/offline"
 }

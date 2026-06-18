@@ -184,6 +184,10 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   const rankingMateriasTop = (payload?.ranking_materias ?? []).slice(0, 5);
   const leadingSala = rankingTop[0];
   const leadingMateria = rankingMateriasTop[0];
+  const hasCompositionData = totalAtual > 0;
+  const hasChartData = chartBars.length > 0;
+  const hasSalaRanking = rankingTop.length > 0;
+  const hasMateriaRanking = rankingMateriasTop.length > 0;
   const totalEquipes = totalVerdinhos + totalAmarelinhos + totalProfessores;
 
   return (
@@ -248,16 +252,6 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               </button>
               <button
                 type="button"
-                className={sessaoSenib === '3' ? 'tab-active' : 'tab-button'}
-                onClick={() => {
-                  setSessaoSenib('3');
-                  setAulaRef('');
-                }}
-              >
-                3º SENIB
-              </button>
-              <button
-                type="button"
                 className={sessaoSenib === '' ? 'tab-active' : 'tab-button'}
                 onClick={() => {
                   setSessaoSenib('');
@@ -314,19 +308,29 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               </div>
               <span className="dashboard-pill-value">{formatNumber(totalAtual)}</span>
             </header>
-            <div className="dashboard-bar-chart">
-              {chartBars.map((item) => (
-                <div key={item.materia} className="dashboard-bar-group">
-                  <div className="dashboard-bar-stack">
-                    <div
-                      className="dashboard-bar-fill"
-                      style={{ height: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
-                    />
+            {hasChartData ? (
+              <div className="dashboard-bar-chart">
+                {chartBars.map((item) => (
+                  <div key={item.materia} className="dashboard-bar-group">
+                    <div className="dashboard-bar-stack">
+                      <div
+                        className="dashboard-bar-fill"
+                        style={{ height: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
+                      />
+                    </div>
+                    <span>{item.materia}</span>
                   </div>
-                  <span>{item.materia}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="dashboard-empty-state dashboard-empty-state-chart">
+                <strong>Nenhuma matéria consolidada ainda</strong>
+                <p>
+                  Importe ou ative uma rodada para visualizar as matérias com maior presença neste
+                  recorte.
+                </p>
+              </div>
+            )}
           </article>
 
           <article className="dashboard-analytic-panel">
@@ -390,52 +394,62 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               </div>
               <span className="dashboard-chip">Última</span>
             </header>
-            <div className="dashboard-composition-layout">
-              <div className="dashboard-composition-hero">
-                <div className="dashboard-donut" style={donutStyle}>
-                  <div className="dashboard-donut-core">
-                    <strong>{formatNumber(totalAtual)}</strong>
-                    <span>Total</span>
+            {hasCompositionData ? (
+              <div className="dashboard-composition-layout">
+                <div className="dashboard-composition-hero">
+                  <div className="dashboard-donut" style={donutStyle}>
+                    <div className="dashboard-donut-core">
+                      <strong>{formatNumber(totalAtual)}</strong>
+                      <span>Total</span>
+                    </div>
+                  </div>
+                  <div className="dashboard-composition-kpis">
+                    <article>
+                      <span>Predominância</span>
+                      <strong>{`${Math.round((totalAlunos / totalAtual) * 100)}%`}</strong>
+                      <small>Alunos no total consolidado</small>
+                    </article>
+                    <article>
+                      <span>Equipe</span>
+                      <strong>{formatNumber(totalEquipes)}</strong>
+                      <small>Verdinhos, amarelinhos e professores</small>
+                    </article>
                   </div>
                 </div>
-                <div className="dashboard-composition-kpis">
-                  <article>
-                    <span>Predominância</span>
-                    <strong>{totalAtual ? `${Math.round((totalAlunos / totalAtual) * 100)}%` : '0%'}</strong>
-                    <small>Alunos no total consolidado</small>
-                  </article>
-                  <article>
-                    <span>Equipe</span>
-                    <strong>{formatNumber(totalEquipes)}</strong>
-                    <small>Verdinhos, amarelinhos e professores</small>
-                  </article>
-                </div>
+                <ul className="dashboard-composition-list">
+                  {compositionEntries.map((item) => {
+                    const percentage = Math.round((item.value / totalAtual) * 100);
+                    return (
+                      <li key={item.key}>
+                        <div className="dashboard-composition-label">
+                          <i style={{ backgroundColor: item.color }} />
+                          <span>{item.label}</span>
+                        </div>
+                        <div className="dashboard-composition-bar">
+                          <div
+                            className="dashboard-composition-fill"
+                            style={{
+                              width: `${clampPercent(percentage)}%`,
+                              backgroundColor: item.color,
+                            }}
+                          />
+                        </div>
+                        <strong>{formatNumber(item.value)}</strong>
+                        <small>{percentage}%</small>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
-              <ul className="dashboard-composition-list">
-                {compositionEntries.map((item) => {
-                  const percentage = totalAtual ? Math.round((item.value / totalAtual) * 100) : 0;
-                  return (
-                    <li key={item.key}>
-                      <div className="dashboard-composition-label">
-                        <i style={{ backgroundColor: item.color }} />
-                        <span>{item.label}</span>
-                      </div>
-                      <div className="dashboard-composition-bar">
-                        <div
-                          className="dashboard-composition-fill"
-                          style={{
-                            width: `${clampPercent(percentage)}%`,
-                            backgroundColor: item.color,
-                          }}
-                        />
-                      </div>
-                      <strong>{formatNumber(item.value)}</strong>
-                      <small>{percentage}%</small>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+            ) : (
+              <div className="dashboard-empty-state dashboard-empty-state-composition">
+                <strong>Sem leitura consolidada</strong>
+                <p>
+                  Assim que a presença for lançada no painel, a composição por categoria aparece
+                  aqui.
+                </p>
+              </div>
+            )}
           </article>
 
           <article className="dashboard-analytic-panel">
@@ -453,26 +467,33 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                 <small>{formatNumber(leadingSala.media)} presenças consolidadas</small>
               </div>
             ) : null}
-            <ul className="dashboard-ranking-list">
-              {rankingTop.map((item, index) => (
-                <li key={item.sala}>
-                  <div className="dashboard-ranking-copy">
-                    <span className="dashboard-ranking-position">{index + 1}</span>
-                    <div>
-                      <strong>{item.sala}</strong>
-                      <small>Média local consolidada</small>
+            {hasSalaRanking ? (
+              <ul className="dashboard-ranking-list">
+                {rankingTop.map((item, index) => (
+                  <li key={item.sala}>
+                    <div className="dashboard-ranking-copy">
+                      <span className="dashboard-ranking-position">{index + 1}</span>
+                      <div>
+                        <strong>{item.sala}</strong>
+                        <small>Média local consolidada</small>
+                      </div>
                     </div>
-                  </div>
-                  <div className="dashboard-ranking-track">
-                    <div
-                      className="dashboard-ranking-fill"
-                      style={{ width: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
-                    />
-                  </div>
-                  <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
-                </li>
-              ))}
-            </ul>
+                    <div className="dashboard-ranking-track">
+                      <div
+                        className="dashboard-ranking-fill"
+                        style={{ width: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
+                      />
+                    </div>
+                    <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="dashboard-empty-state dashboard-empty-state-ranking">
+                <strong>Nenhuma sala consolidada</strong>
+                <p>O ranking aparece quando existir uma rodada ativa com presença registrada.</p>
+              </div>
+            )}
           </article>
 
           <article className="dashboard-analytic-panel">
@@ -494,32 +515,39 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                 <small>{formatNumber(leadingMateria.media)} presenças consolidadas</small>
               </div>
             ) : null}
-            <ul className="dashboard-ranking-list">
-              {rankingMateriasTop.map((item, index) => (
-                <li key={item.materia}>
-                  <div className="dashboard-ranking-copy">
-                    <span className="dashboard-ranking-position">{index + 1}</span>
-                    <div>
-                      <strong>{item.materia}</strong>
-                      <small>Média consolidada da matéria</small>
+            {hasMateriaRanking ? (
+              <ul className="dashboard-ranking-list">
+                {rankingMateriasTop.map((item, index) => (
+                  <li key={item.materia}>
+                    <div className="dashboard-ranking-copy">
+                      <span className="dashboard-ranking-position">{index + 1}</span>
+                      <div>
+                        <strong>{item.materia}</strong>
+                        <small>Média consolidada da matéria</small>
+                      </div>
                     </div>
-                  </div>
-                  <div className="dashboard-ranking-track">
-                    <div
-                      className="dashboard-ranking-fill dashboard-ranking-fill-materia"
-                      style={{
-                        width: `${clampPercent(
-                          (item.media /
-                            Math.max(...rankingMateriasTop.map((entry) => entry.media), 1)) *
-                            100,
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                  <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
-                </li>
-              ))}
-            </ul>
+                    <div className="dashboard-ranking-track">
+                      <div
+                        className="dashboard-ranking-fill dashboard-ranking-fill-materia"
+                        style={{
+                          width: `${clampPercent(
+                            (item.media /
+                              Math.max(...rankingMateriasTop.map((entry) => entry.media), 1)) *
+                              100,
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="dashboard-empty-state dashboard-empty-state-ranking">
+                <strong>Nenhuma matéria consolidada</strong>
+                <p>O ranking de matérias aparece quando a rodada tiver leituras lançadas.</p>
+              </div>
+            )}
           </article>
         </div>
       </article>

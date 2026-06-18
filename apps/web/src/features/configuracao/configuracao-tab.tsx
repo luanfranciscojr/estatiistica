@@ -593,7 +593,6 @@ export function ConfiguracaoTab({
                     >
                       <option value={1}>1º SENIB</option>
                       <option value={2}>2º SENIB</option>
-                      <option value={3}>3º SENIB</option>
                     </select>
                   </label>
                   <label className="field">

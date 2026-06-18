@@ -326,7 +326,7 @@ if ((typeof exports.default === "function" || typeof exports.default === "object
 
 /***/ }),
 
-/***/ 3075:
+/***/ 2158:
 /***/ ((module, exports, __webpack_require__) => {
 
 
@@ -8754,7 +8754,7 @@ function _interop_require_wildcard(obj, nodeInterop) {
 const { requestAsyncStorage } = __webpack_require__(2311);
 const { staticGenerationAsyncStorage } = __webpack_require__(9697);
 const serverHooks = __webpack_require__(5213);
-const headerHooks = __webpack_require__(3075);
+const headerHooks = __webpack_require__(2158);
 const { staticGenerationBailout } = __webpack_require__(6213);
 const { actionAsyncStorage } = __webpack_require__(6071);
 class AppRouteRouteModule extends _routemodule.RouteModule {
@@ -11426,7 +11426,7 @@ Object.defineProperty(exports, "addLocale", ({
         return addLocale;
     }
 }));
-const _addpathprefix = __webpack_require__(4422);
+const _addpathprefix = __webpack_require__(4958);
 const _pathhasprefix = __webpack_require__(3055);
 function addLocale(path, locale, defaultLocale, ignorePrefix) {
     // If no locale was given or the locale is the default locale, we don't need
@@ -11479,7 +11479,7 @@ function addLocale(path, locale, defaultLocale, ignorePrefix) {
 
 /***/ }),
 
-/***/ 4422:
+/***/ 4958:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -11492,7 +11492,7 @@ Object.defineProperty(exports, "addPathPrefix", ({
         return addPathPrefix;
     }
 }));
-const _parsepath = __webpack_require__(4380);
+const _parsepath = __webpack_require__(2434);
 function addPathPrefix(path, prefix) {
     if (!path.startsWith("/") || !prefix) {
         return path;
@@ -11542,7 +11542,7 @@ Object.defineProperty(exports, "addPathSuffix", ({
         return addPathSuffix;
     }
 }));
-const _parsepath = __webpack_require__(4380);
+const _parsepath = __webpack_require__(2434);
 function addPathSuffix(path, suffix) {
     if (!path.startsWith("/") || !suffix) {
         return path;
@@ -11593,7 +11593,7 @@ Object.defineProperty(exports, "formatNextPathnameInfo", ({
     }
 }));
 const _removetrailingslash = __webpack_require__(67);
-const _addpathprefix = __webpack_require__(4422);
+const _addpathprefix = __webpack_require__(4958);
 const _addpathsuffix = __webpack_require__(6458);
 const _addlocale = __webpack_require__(8138);
 function formatNextPathnameInfo(info) {
@@ -11747,7 +11747,7 @@ function getNextPathnameInfo(pathname, options) {
 
 /***/ }),
 
-/***/ 4380:
+/***/ 2434:
 /***/ ((__unused_webpack_module, exports) => {
 
 /**
@@ -11836,7 +11836,7 @@ Object.defineProperty(exports, "pathHasPrefix", ({
         return pathHasPrefix;
     }
 }));
-const _parsepath = __webpack_require__(4380);
+const _parsepath = __webpack_require__(2434);
 function pathHasPrefix(path, prefix) {
     if (typeof path !== "string") {
         return false;
