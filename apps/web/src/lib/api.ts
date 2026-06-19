@@ -3,7 +3,7 @@ function getApiBaseUrl() {
     return 'http://localhost:3001/api';
   }
 
-  return `${window.location.protocol}//${window.location.hostname}:3020/api`;
+  return '/api';
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit) {

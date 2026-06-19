@@ -20,6 +20,10 @@ const metricPalette = {
     accent: '#82efb3',
     backgroundClass: 'dashboard-kpi-card-emerald',
   },
+  amarelinhos: {
+    accent: '#f4cf68',
+    backgroundClass: 'dashboard-kpi-card-amber',
+  },
   professor: {
     accent: '#c8b8ff',
     backgroundClass: 'dashboard-kpi-card-lilac',
@@ -156,6 +160,17 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
       accent: metricPalette.verdinhos.accent,
       className: metricPalette.verdinhos.backgroundClass,
       series: seriesBase.map((value) => Math.round(value * (totalAtual ? totalVerdinhos / totalAtual : 0))),
+    },
+    {
+      key: 'amarelinhos',
+      label: 'Amarelinhos',
+      value: totalAmarelinhos,
+      delta: totalAtual ? (totalAmarelinhos / totalAtual) * 100 : 0,
+      accent: metricPalette.amarelinhos.accent,
+      className: metricPalette.amarelinhos.backgroundClass,
+      series: seriesBase.map((value) =>
+        Math.round(value * (totalAtual ? totalAmarelinhos / totalAtual : 0)),
+      ),
     },
     {
       key: 'professor',
