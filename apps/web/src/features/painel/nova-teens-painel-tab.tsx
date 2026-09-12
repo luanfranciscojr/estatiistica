@@ -131,7 +131,7 @@ export function NovaTeensPainelTab({ user }: { user: SessionUser }) {
                       >
                         -
                       </button>
-                      <strong>{formatNumber(encontro[key as 'teens' | 'lideres'])}</strong>
+                      <input className="counter-input" type="number" min="0" defaultValue={encontro[key as 'teens' | 'lideres']} aria-label={`${label} em ${encontro.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={async (event) => { const field = key as 'teens' | 'lideres'; const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== encontro[field]) { await apiFetch(`/nova-teens/${encontro.id}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) }); await loadPainel(); } else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(encontro[field]); }} />
                       <button
                         type="button"
                         className="mini-button"

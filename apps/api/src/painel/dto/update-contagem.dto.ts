@@ -1,4 +1,4 @@
-import { IsIn, IsString } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { CONTAGEM_CATEGORIAS, CONTAGEM_OPERACOES } from '../../common/constants';
 
 export class UpdateContagemDto {
@@ -9,4 +9,9 @@ export class UpdateContagemDto {
   @IsString()
   @IsIn(CONTAGEM_OPERACOES)
   operacao!: (typeof CONTAGEM_OPERACOES)[number];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  valor?: number;
 }

@@ -264,7 +264,9 @@ export class PainelService {
 
     const currentValue = contagem[dto.categoria];
     const nextValue =
-      dto.operacao === 'incremento'
+      dto.operacao === 'ajuste'
+        ? dto.valor ?? currentValue
+        : dto.operacao === 'incremento'
         ? currentValue + 1
         : dto.operacao === 'decremento'
           ? currentValue - 1

@@ -112,7 +112,7 @@ export function CultoPainelTab({ user }: { user: SessionUser }) {
               <div className="culto-counter-body">
                 <div className="culto-counter-value">
                   <span>Total geral</span>
-                  <strong>{formatNumber(culto.total)}</strong>
+                  <input className="counter-input" type="number" min="0" defaultValue={culto.total} aria-label={`Total do ${culto.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={async (event) => { const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== culto.total) { await apiFetch(`/cultos/${culto.id}`, { method: 'PATCH', body: JSON.stringify({ total: value }) }); await loadPainel(); } else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(culto.total); }} />
                 </div>
                 <div className="culto-counter-actions">
                   <button

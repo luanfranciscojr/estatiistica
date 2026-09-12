@@ -952,6 +952,25 @@ textarea {
   gap: 10px;
 }
 
+.counter-input {
+  width: 58px;
+  min-height: 34px;
+  padding: 4px 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
 .counter-actions strong,
 .ordered-list span,
 table td:nth-child(3),
