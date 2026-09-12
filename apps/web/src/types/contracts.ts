@@ -1,5 +1,5 @@
 export const roleOptions = ['admin', 'estatistica', 'verdinho', 'pastor'] as const;
-export const operationOptions = ['senib', 'culto', 'nova_teens'] as const;
+export const operationOptions = ['senib', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby'] as const;
 
 export const categoryLabels = [
   ['alunos', 'Alunos'],
@@ -10,6 +10,59 @@ export const categoryLabels = [
 
 export type AppTab = 'painel' | 'configuracao' | 'dashboard' | 'usuarios';
 export type OperationMode = (typeof operationOptions)[number];
+
+export type ProgramaInfantilPainelPayload = {
+  data_atual: string | null;
+  datas_disponiveis: string[];
+  encontros: Array<{
+    id: number;
+    ordem: number;
+    nome: string;
+    participantes: number;
+    lideres: number;
+    total: number;
+    status: string;
+  }>;
+  total_geral: number;
+};
+
+export type ProgramaInfantilDashboardPayload = {
+  ultima_leitura: {
+    data_referencia: string;
+    total_geral: number;
+    encontros: Array<{
+      ordem: number;
+      nome: string;
+      participantes: number;
+      lideres: number;
+      total: number;
+    }>;
+  } | null;
+  media_por_encontro: number;
+  media_geral: number;
+  pico: number;
+  datas_disponiveis: string[];
+  data_atual: string | null;
+  comparativo_encontros: Array<{
+    ordem: number;
+    nome: string;
+    media_total: number;
+    media_participantes: number;
+    media_lideres: number;
+    ultimo_total: number;
+  }>;
+  historico: Array<{
+    data_referencia: string;
+    total_geral: number;
+    encontros: Array<{
+      ordem: number;
+      nome: string;
+      participantes: number;
+      lideres: number;
+      total: number;
+    }>;
+  }>;
+};
 
 export type SessionUser = {
   id: number;

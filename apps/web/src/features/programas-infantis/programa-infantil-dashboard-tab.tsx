@@ -1,0 +1,15 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../../lib/api';
+import { formatDateOnly, formatNumber } from '../../lib/format';
+import type { ProgramaInfantilDashboardPayload } from '../../types/contracts';
+
+export function ProgramaInfantilDashboardTab({ programa, label }: { programa: 'um-com-deus' | 'nova-baby'; label: string }) {
+  const [payload, setPayload] = useState<ProgramaInfantilDashboardPayload | null>(null);
+  const [selectedDate, setSelectedDate] = useState('');
+  useEffect(() => { const query = selectedDate ? `?data_referencia=${selectedDate}` : ''; apiFetch<ProgramaInfantilDashboardPayload>(`/${programa}/dashboard${query}`, { headers: {} }).then(setPayload); }, [selectedDate, programa]);
+  const historico = payload?.historico ?? [];
+  const latest = payload?.ultima_leitura?.total_geral ?? 0;
+  return <section className="layout-grid"><article className="panel-card span-full dashboard-shell"><header className="dashboard-topline"><div><p className="eyebrow">Indicadores Consolidados</p><h2>Dashboard Analítico {label}</h2></div><label className="dashboard-select-field"><span>Data do encontro</span><select value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)}><option value="">Todas</option>{(payload?.datas_disponiveis ?? []).map((item) => <option key={item} value={item}>{formatDateOnly(item)}</option>)}</select></label></header><div className="dashboard-kpi-grid">{[['Última leitura', latest, payload?.ultima_leitura?.data_referencia ? formatDateOnly(payload.ultima_leitura.data_referencia) : 'Sem base'], ['Média por encontro', Math.round(payload?.media_por_encontro ?? 0), 'Média por slot'], ['Média geral', Math.round(payload?.media_geral ?? 0), 'Média por data'], ['Pico', payload?.pico ?? 0, 'Maior total']].map(([title, value, caption]) => <article key={String(title)} className="dashboard-kpi-card dashboard-kpi-card-cyan"><div className="dashboard-kpi-head"><span>{title}</span><small>{caption}</small></div><strong>{formatNumber(Number(value))}</strong></article>)}</div></article><article className="panel-card span-full"><header className="section-header"><div><p className="eyebrow">Comparativo</p><h2>Totais por Encontro</h2></div></header><div className="culto-counter-grid">{(payload?.comparativo_encontros ?? []).map((item) => <article key={item.ordem} className="inline-card"><strong>{item.nome}</strong><span>Média total: {formatNumber(Math.round(item.media_total))}</span><span>Média participantes: {formatNumber(Math.round(item.media_participantes))}</span><span>Média líderes: {formatNumber(Math.round(item.media_lideres))}</span><span>Último total: {formatNumber(item.ultimo_total)}</span></article>)}</div><div className="selection-list-shell"><ul className="selection-list">{historico.map((item) => <li key={item.data_referencia}><div className="selection-button"><strong>{formatDateOnly(item.data_referencia)}</strong><span>Total: {formatNumber(item.total_geral)}</span></div></li>)}</ul></div></article></section>;
+}

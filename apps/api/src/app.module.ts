@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthMiddleware } from './common/auth.middleware';
 import { CultosModule } from './cultos/cultos.module';
 import { NovaTeensModule } from './nova-teens/nova-teens.module';
+import { ProgramasInfantisModule } from './programas-infantis/programas-infantis.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NibModule } from './nib/nib.module';
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     CultosModule,
     NovaTeensModule,
+    ProgramasInfantisModule,
     NibModule,
     RodadasModule,
     PainelModule,

@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useState } from 'react';
 import { CultoPainelTab } from './culto-painel-tab';
 import { NovaTeensPainelTab } from './nova-teens-painel-tab';
+import { ProgramaInfantilPainelTab } from '../programas-infantis/programa-infantil-painel-tab';
 import { apiFetch } from '../../lib/api';
 import { formatNumber, formatSessaoLabel } from '../../lib/format';
 import {
@@ -20,6 +21,9 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
   }
   if (operation === 'nova_teens') {
     return <NovaTeensPainelTab user={user} />;
+  }
+  if (operation === 'um_com_deus' || operation === 'nova_baby') {
+    return <ProgramaInfantilPainelTab programa={operation === 'um_com_deus' ? 'um-com-deus' : 'nova-baby'} label={operation === 'um_com_deus' ? 'Um com Deus' : 'Nova Baby'} user={user} />;
   }
 
   const [painel, setPainel] = useState<PainelPayload | null>(null);

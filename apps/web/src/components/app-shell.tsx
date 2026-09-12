@@ -24,7 +24,7 @@ function resolveTab(value: string | null): AppTab {
 }
 
 function resolveOperation(value: string | null): OperationMode {
-  if (value === 'culto' || value === 'nova_teens') {
+  if (value === 'culto' || value === 'nova_teens' || value === 'um_com_deus' || value === 'nova_baby') {
     return value;
   }
 
@@ -134,6 +134,10 @@ export function AppShell() {
               ? 'Operação Local de Culto'
               : activeOperation === 'nova_teens'
                 ? 'Operação Local Nova Teens'
+                : activeOperation === 'um_com_deus'
+                  ? 'Operação Local Um com Deus'
+                  : activeOperation === 'nova_baby'
+                    ? 'Operação Local Nova Baby'
                 : 'Operação Local SENIB'}
           </p>
           <h1>Estatística</h1>
@@ -215,6 +219,20 @@ export function AppShell() {
             onClick={() => setActiveOperation('nova_teens')}
           >
             Nova Teens
+          </button>
+          <button
+            type="button"
+            className={activeOperation === 'um_com_deus' ? 'tab-active' : 'tab-button'}
+            onClick={() => setActiveOperation('um_com_deus')}
+          >
+            Um com Deus
+          </button>
+          <button
+            type="button"
+            className={activeOperation === 'nova_baby' ? 'tab-active' : 'tab-button'}
+            onClick={() => setActiveOperation('nova_baby')}
+          >
+            Nova Baby
           </button>
         </div>
       ) : null}

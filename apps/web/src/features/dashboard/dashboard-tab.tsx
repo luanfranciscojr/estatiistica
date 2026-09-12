@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CultoDashboardTab } from './culto-dashboard-tab';
 import { NovaTeensDashboardTab } from './nova-teens-dashboard-tab';
+import { ProgramaInfantilDashboardTab } from '../programas-infantis/programa-infantil-dashboard-tab';
 import { apiFetch } from '../../lib/api';
 import { formatDate, formatNumber, formatSessaoLabel } from '../../lib/format';
 import type { DashboardPayload, OperationMode, RodadasPayload } from '../../types/contracts';
@@ -81,6 +82,9 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   }
   if (operation === 'nova_teens') {
     return <NovaTeensDashboardTab />;
+  }
+  if (operation === 'um_com_deus' || operation === 'nova_baby') {
+    return <ProgramaInfantilDashboardTab programa={operation === 'um_com_deus' ? 'um-com-deus' : 'nova-baby'} label={operation === 'um_com_deus' ? 'Um com Deus' : 'Nova Baby'} />;
   }
 
   const [payload, setPayload] = useState<DashboardPayload | null>(null);

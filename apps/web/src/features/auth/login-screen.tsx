@@ -28,7 +28,7 @@ export function LoginScreen({
       <div className="login-backdrop" aria-hidden="true" />
       <section className="login-card login-card-reference">
         <div className="login-logo-frame">
-          <img src="/icon-source.svg" alt="Nova Igreja Batista Tabernáculo" />
+          <img src="/logo-jornada-crista.webp" alt="Nova Igreja Batista Tabernáculo" />
         </div>
         <div className="login-badge">
           <span className="login-badge-mark" aria-hidden="true">+</span>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CultoConfiguracaoTab } from './culto-configuracao-tab';
 import { NovaTeensConfiguracaoTab } from './nova-teens-configuracao-tab';
+import { ProgramaInfantilConfiguracaoTab } from '../programas-infantis/programa-infantil-configuracao-tab';
 import { apiFetch } from '../../lib/api';
 import { formatDate, formatNumber, formatSessaoLabel } from '../../lib/format';
 import type {
@@ -30,6 +31,9 @@ export function ConfiguracaoTab({
   }
   if (operation === 'nova_teens') {
     return <NovaTeensConfiguracaoTab user={user} />;
+  }
+  if (operation === 'um_com_deus' || operation === 'nova_baby') {
+    return <ProgramaInfantilConfiguracaoTab programa={operation === 'um_com_deus' ? 'um-com-deus' : 'nova-baby'} label={operation === 'um_com_deus' ? 'Um com Deus' : 'Nova Baby'} user={user} />;
   }
 
   const [rodadas, setRodadas] = useState<RodadasPayload['items']>([]);
