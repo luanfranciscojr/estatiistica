@@ -183,7 +183,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
     },
   ];
 
-  const chartBars = (payload?.ranking_materias ?? []).slice(0, 8);
+  const chartBars = payload?.ranking_materias ?? [];
   const maxBarValue = Math.max(...chartBars.map((item) => item.media), 1);
   const compositionEntries = [
     { key: 'alunos', label: 'Alunos', value: totalAlunos, color: '#4ea84d' },
@@ -196,7 +196,8 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   };
   const historicoRecente = historico.slice(-8);
   const rankingTop = (payload?.ranking_salas ?? []).slice(0, 5);
-  const rankingMateriasTop = (payload?.ranking_materias ?? []).slice(0, 5);
+  const maxSalaRankingValue = Math.max(...rankingTop.map((item) => item.media), 1);
+  const rankingMateriasTop = payload?.ranking_materias ?? [];
   const leadingSala = rankingTop[0];
   const leadingMateria = rankingMateriasTop[0];
   const hasCompositionData = totalAtual > 0;
@@ -324,18 +325,29 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               <span className="dashboard-pill-value">{formatNumber(totalAtual)}</span>
             </header>
             {hasChartData ? (
-              <div className="dashboard-bar-chart">
-                {chartBars.map((item) => (
-                  <div key={item.materia} className="dashboard-bar-group">
-                    <div className="dashboard-bar-stack">
-                      <div
-                        className="dashboard-bar-fill"
-                        style={{ height: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
-                      />
+              <div className="dashboard-bar-chart-scroll">
+                <div
+                  className="dashboard-bar-chart"
+                  style={{ minWidth: `${Math.max(chartBars.length * 82, 100)}px` }}
+                >
+                  {chartBars.map((item) => (
+                    <div key={item.materia} className="dashboard-bar-group">
+                      <div className="dashboard-bar-stack">
+                        <strong
+                          className="dashboard-bar-value"
+                          style={{ bottom: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
+                        >
+                          {formatNumber(Math.round(item.media))}
+                        </strong>
+                        <div
+                          className="dashboard-bar-fill"
+                          style={{ height: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
+                        />
+                      </div>
+                      <span title={item.materia}>{item.materia}</span>
                     </div>
-                    <span>{item.materia}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="dashboard-empty-state dashboard-empty-state-chart">
@@ -550,7 +562,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                     <div className="dashboard-ranking-track">
                       <div
                         className="dashboard-ranking-fill"
-                        style={{ width: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
+                        style={{ width: `${clampPercent((item.media / maxSalaRankingValue) * 100)}%` }}
                       />
                     </div>
                     <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>

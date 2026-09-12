@@ -25,33 +25,49 @@ export function LoginScreen({
 
   return (
     <main className="login-shell">
-      <section className="login-card">
-        <p className="eyebrow">V1 Operacional</p>
-        <h1>Acesso Local</h1>
-        <p className="body-copy">
-          O frontend comunica-se apenas com o backend local. A integracao com a NIB
-          permanece encapsulada no servidor.
-        </p>
-        <form className="form-stack" onSubmit={handleSubmit}>
-          <label className="field">
+      <div className="login-backdrop" aria-hidden="true" />
+      <section className="login-card login-card-reference">
+        <div className="login-logo-frame">
+          <img src="/icon-source.svg" alt="Nova Igreja Batista Tabernáculo" />
+        </div>
+        <div className="login-badge">
+          <span className="login-badge-mark" aria-hidden="true">+</span>
+          Acesso ao sistema
+        </div>
+        <div className="login-heading">
+          <p className="eyebrow">Estatísticas SENIB</p>
+          <h1>Entrar no painel</h1>
+          <p className="body-copy">
+            Acompanhe a presença, as rodadas e os indicadores do SENIB em um só lugar.
+          </p>
+        </div>
+        <form className="form-stack login-form" onSubmit={handleSubmit}>
+          <label className="field login-field">
             <span>Login</span>
             <input
+              id="login"
               name="login"
               type="text"
               autoComplete="username"
+              spellCheck={false}
               value={login}
               onChange={(event) => setLogin(event.target.value)}
+              placeholder="Digite seu login"
+              disabled={loading}
               required
             />
           </label>
-          <label className="field">
+          <label className="field login-field">
             <span>Senha</span>
             <input
+              id="senha"
               name="senha"
               type="password"
               autoComplete="current-password"
               value={senha}
               onChange={(event) => setSenha(event.target.value)}
+              placeholder="Digite sua senha"
+              disabled={loading}
               required
             />
           </label>
@@ -60,10 +76,13 @@ export function LoginScreen({
               {error}
             </p>
           ) : null}
-          <button type="submit" className="primary-button" disabled={loading}>
-            {loading ? 'Entrando…' : 'Entrar'}
+          <button type="submit" className="primary-button login-submit" disabled={loading}>
+            {loading ? 'Entrando…' : 'Entrar no painel'}
           </button>
         </form>
+        <p className="login-helper">
+          Acesso protegido para a equipe autorizada do SENIB.
+        </p>
       </section>
     </main>
   );
