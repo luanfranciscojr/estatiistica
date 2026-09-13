@@ -6,6 +6,7 @@ import { LoginScreen } from '../features/auth/login-screen';
 import { ConfiguracaoTab } from '../features/configuracao/configuracao-tab';
 import { DashboardTab } from '../features/dashboard/dashboard-tab';
 import { PainelTab } from '../features/painel/painel-tab';
+import { RelatorioTab } from '../features/relatorios/relatorio-tab';
 import { UsersTab } from '../features/users/users-tab';
 import { apiFetch } from '../lib/api';
 import type { AppTab, OperationMode, SessionPayload } from '../types/contracts';
@@ -15,7 +16,8 @@ function resolveTab(value: string | null): AppTab {
     value === 'painel' ||
     value === 'configuracao' ||
     value === 'dashboard' ||
-    value === 'usuarios'
+    value === 'usuarios' ||
+    value === 'relatorio'
   ) {
     return value;
   }
@@ -130,7 +132,9 @@ export function AppShell() {
       <header className="topbar">
         <div>
           <p className="eyebrow">
-            {activeOperation === 'culto'
+            {activeTab === 'relatorio'
+              ? 'Consolidação Semanal'
+              : activeOperation === 'culto'
               ? 'Operação Local de Culto'
               : activeOperation === 'nova_teens'
                 ? 'Operação Local Nova Teens'
@@ -186,6 +190,13 @@ export function AppShell() {
         >
           Dashboard
         </button>
+        <button
+          type="button"
+          className={activeTab === 'relatorio' ? 'tab-active' : 'tab-button'}
+          onClick={() => setActiveTab('relatorio')}
+        >
+          Relatório
+        </button>
         {permissions.canViewUsers ? (
           <button
             type="button"
@@ -197,8 +208,8 @@ export function AppShell() {
         ) : null}
       </nav>
 
-      {activeTab !== 'usuarios' ? (
-        <div className="operation-switch" role="tablist" aria-label="Operação estatística">
+      {activeTab !== 'usuarios' && activeTab !== 'relatorio' ? (
+        <div className="operation-switch" role="group" aria-label="Operação estatística">
           <button
             type="button"
             className={activeOperation === 'senib' ? 'tab-active' : 'tab-button'}
@@ -244,6 +255,7 @@ export function AppShell() {
         <ConfiguracaoTab user={session.user} operation={activeOperation} />
       ) : null}
       {activeTab === 'dashboard' ? <DashboardTab operation={activeOperation} /> : null}
+      {activeTab === 'relatorio' ? <RelatorioTab /> : null}
       {activeTab === 'usuarios' && permissions.canViewUsers ? <UsersTab /> : null}
     </main>
   );

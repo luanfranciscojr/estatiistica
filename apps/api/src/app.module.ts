@@ -12,6 +12,7 @@ import { PainelModule } from './painel/painel.module';
 import { ParserModule } from './parser/parser.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RodadasModule } from './rodadas/rodadas.module';
+import { RelatoriosModule } from './relatorios/relatorios.module';
 import { SystemModule } from './system/system.module';
 import { UsersModule } from './users/users.module';
 
@@ -27,6 +28,7 @@ import { UsersModule } from './users/users.module';
     ProgramasInfantisModule,
     NibModule,
     RodadasModule,
+    RelatoriosModule,
     PainelModule,
     DashboardModule,
     ParserModule,

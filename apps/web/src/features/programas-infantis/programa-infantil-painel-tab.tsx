@@ -10,6 +10,7 @@ export function ProgramaInfantilPainelTab({ programa, label, user }: { programa:
   const [selectedDate, setSelectedDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const canManage = user.roles.some((role) => ['admin', 'estatistica'].includes(role));
+  const equipeLabel = 'Professores';
 
   async function loadPainel() {
     try {
@@ -50,7 +51,7 @@ export function ProgramaInfantilPainelTab({ programa, label, user }: { programa:
             <h2>Painel Operacional {label}</h2>
             <p className="body-copy hero-copy">Contagem independente por encontro e por data.</p>
           </div>
-          <div className="stat-chip stat-chip-hero"><span>Total do dia</span><strong>{formatNumber(painel?.total_geral ?? 0)}</strong><small>Participantes + líderes</small></div>
+          <div className="stat-chip stat-chip-hero"><span>Total do dia</span><strong>{formatNumber(painel?.total_geral ?? 0)}</strong><small>Participantes + professores</small></div>
         </header>
         <div className="action-row panel-toolbar-row">
           <label className="field compact-field">
@@ -71,7 +72,7 @@ export function ProgramaInfantilPainelTab({ programa, label, user }: { programa:
             <section key={encontro.id} className="counter-card culto-counter-card">
               <div className="counter-head"><div><strong>{encontro.nome}</strong><span>{painel?.data_atual ? formatDateOnly(painel.data_atual) : 'Sem data'}</span></div><span className="counter-total">{formatNumber(encontro.total)}</span></div>
               <div className="counter-stack">
-                {([['participantes', 'Participantes'], ['lideres', 'Líderes']] as const).map(([field, fieldLabel]) => (
+                {([['participantes', 'Participantes'], ['lideres', equipeLabel]] as const).map(([field, fieldLabel]) => (
                   <div key={field} className="counter-row"><span>{fieldLabel}</span><div className="counter-actions"><button type="button" className="mini-button" aria-label={`Diminuir ${fieldLabel}`} onClick={() => changeCount(encontro.id, field, encontro[field] - 1)}>-</button><input className="counter-input" type="number" min="0" defaultValue={encontro[field]} aria-label={`${fieldLabel} em ${encontro.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={(event) => { const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== encontro[field]) void changeCount(encontro.id, field, value); else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(encontro[field]); }} /><button type="button" className="mini-button" aria-label={`Aumentar ${fieldLabel}`} onClick={() => changeCount(encontro.id, field, encontro[field] + 1)}>+</button></div></div>
                 ))}
               </div>

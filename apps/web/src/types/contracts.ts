@@ -8,8 +8,29 @@ export const categoryLabels = [
   ['professor', 'Professor'],
 ] as const;
 
-export type AppTab = 'painel' | 'configuracao' | 'dashboard' | 'usuarios';
+export type AppTab = 'painel' | 'configuracao' | 'dashboard' | 'relatorio' | 'usuarios';
 export type OperationMode = (typeof operationOptions)[number];
+
+export type RelatorioSemanalPayload = {
+  data_referencia: string;
+  data_sabado: string;
+  aula_ref: string;
+  rodada: { id: number; referencia: string } | null;
+  senib: Array<{
+    sessao_senib: number;
+    salas: Array<{
+      sala: string;
+      materia: string;
+      local: string;
+      total: number;
+    }>;
+    total: number;
+  }>;
+  cultos: Array<{ ordem: number; total: number }>;
+  nova_teens: Array<{ ordem: number; participantes: number }>;
+  nova_baby: Array<{ ordem: number; participantes: number }>;
+  avisos: string[];
+};
 
 export type ProgramaInfantilPainelPayload = {
   data_atual: string | null;
@@ -87,7 +108,16 @@ export type DashboardPayload = {
   media_geral: number;
   aulas_disponiveis: string[];
   aula_atual: string | null;
-  ranking_salas: Array<{ sala: string; media: number }>;
+  ranking_salas: Array<{
+    sala: string;
+    sessao_senib: number;
+    media: number;
+    alunos: number;
+    verdinhos: number;
+    amarelinhos: number;
+    professor: number;
+    total_leituras: number;
+  }>;
   ranking_materias: Array<{ materia: string; media: number }>;
   composicao_presenca: Record<string, number>;
   historico: Array<{

@@ -42,7 +42,6 @@ export class DashboardService {
                 },
                 }
               : {}),
-            ...(aulaRef ? { aulaRef } : {}),
           },
           include: {
             sala: true,
@@ -67,7 +66,14 @@ export class DashboardService {
       ),
     ].sort((left, right) => this.compareAulaRefs(left, right));
 
-    const historico = rodadas.map((rodada) => ({
+    const rodadasFiltradas = rodadas.map((rodada) => ({
+      ...rodada,
+      contagens: aulaRef
+        ? rodada.contagens.filter((contagem) => contagem.aulaRef === aulaRef)
+        : rodada.contagens,
+    }));
+
+    const historico = rodadasFiltradas.map((rodada) => ({
       rodada_id: rodada.id,
       referencia: rodada.referencia,
       sessao_senib: sessaoSenib ?? null,
@@ -81,30 +87,61 @@ export class DashboardService {
         ? historico.reduce((sum, item) => sum + item.total_presenca, 0) / historico.length
         : 0;
 
-    const allContagens = rodadas.flatMap((rodada) => rodada.contagens);
+    const allContagens = rodadasFiltradas.flatMap((rodada) => rodada.contagens);
     const mediaGeral =
       allContagens.length > 0
         ? allContagens.reduce((sum, item) => sum + item.total, 0) / allContagens.length
         : 0;
 
-    const salaStats = new Map<string, { total: number; count: number }>();
+    const salaStats = new Map<
+      string,
+      {
+        total: number;
+        alunos: number;
+        verdinhos: number;
+        amarelinhos: number;
+        professor: number;
+        count: number;
+        sala: string;
+        sessaoSenib: number;
+      }
+    >();
     for (const item of allContagens) {
-      const key = item.sala.nome;
-      const current = salaStats.get(key) ?? { total: 0, count: 0 };
+      const key = `${item.sala.sessaoSenib}:${item.sala.nome}`;
+      const current = salaStats.get(key) ?? {
+        total: 0,
+        alunos: 0,
+        verdinhos: 0,
+        amarelinhos: 0,
+        professor: 0,
+        count: 0,
+        sala: item.sala.nome,
+        sessaoSenib: item.sala.sessaoSenib,
+      };
       current.total += item.total;
+      current.alunos += item.alunos;
+      current.verdinhos += item.verdinhos;
+      current.amarelinhos += item.amarelinhos;
+      current.professor += item.professor;
       current.count += 1;
       salaStats.set(key, current);
     }
 
     const rankingSalas = [...salaStats.entries()]
-      .map(([sala, stats]) => ({
-        sala,
+      .map(([, stats]) => ({
+        sala: stats.sala,
+        sessao_senib: stats.sessaoSenib,
         media: stats.count > 0 ? stats.total / stats.count : 0,
+        alunos: stats.count > 0 ? stats.alunos / stats.count : 0,
+        verdinhos: stats.count > 0 ? stats.verdinhos / stats.count : 0,
+        amarelinhos: stats.count > 0 ? stats.amarelinhos / stats.count : 0,
+        professor: stats.count > 0 ? stats.professor / stats.count : 0,
+        total_leituras: stats.count,
       }))
       .sort((a, b) => b.media - a.media);
 
     const materiaStats = new Map<string, { total: number; count: number }>();
-    for (const rodada of rodadas) {
+    for (const rodada of rodadasFiltradas) {
       for (const materia of rodada.materias) {
         const contagensMateria = rodada.contagens.filter(
           (item) =>
@@ -130,7 +167,8 @@ export class DashboardService {
       }))
       .sort((a, b) => b.media - a.media);
 
-    const composicaoPresenca = allContagens.reduce(
+    const contagensUltimaRodada = rodadasFiltradas[0]?.contagens ?? [];
+    const composicaoPresenca = contagensUltimaRodada.reduce(
       (acc, item) => {
         acc.alunos += item.alunos;
         acc.verdinhos += item.verdinhos;

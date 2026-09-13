@@ -10,11 +10,11 @@ import type { DashboardPayload, OperationMode, RodadasPayload } from '../../type
 
 const metricPalette = {
   total: {
-    accent: '#b39cff',
+    accent: 'hsl(152 46% 29%)',
     backgroundClass: 'dashboard-kpi-card-violet',
   },
   alunos: {
-    accent: '#73e6ff',
+    accent: 'hsl(152 31% 42%)',
     backgroundClass: 'dashboard-kpi-card-cyan',
   },
   verdinhos: {
@@ -60,6 +60,10 @@ function formatDelta(value: number) {
   return `${prefix}${value.toFixed(1)}%`;
 }
 
+function formatPercent(value: number) {
+  return `${value.toFixed(1)}%`;
+}
+
 function buildCompositionGradient(entries: Array<{ key: string; value: number; color: string }>) {
   const total = entries.reduce((sum, entry) => sum + entry.value, 0);
   if (!total) {
@@ -92,18 +96,25 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   const [sessaoSenib, setSessaoSenib] = useState('2');
   const [rodadaId, setRodadaId] = useState('');
   const [aulaRef, setAulaRef] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   function formatAulaLabel(value: string) {
     return value === 'consolidado' ? 'Consolidado' : value;
   }
 
   useEffect(() => {
-    apiFetch<RodadasPayload>('/rodadas', { headers: {} }).then((response) => {
-      setRodadas(response.items);
-    });
+    apiFetch<RodadasPayload>('/rodadas', { headers: {} })
+      .then((response) => setRodadas(response.items))
+      .catch((requestError) => {
+        setError(
+          requestError instanceof Error ? requestError.message : 'Falha ao carregar as rodadas.',
+        );
+      });
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     const params = new URLSearchParams();
     if (sessaoSenib) {
       params.set('sessao_senib', sessaoSenib);
@@ -115,22 +126,41 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
       params.set('aula_ref', aulaRef);
     }
 
+    setLoading(true);
+    setError(null);
     apiFetch<DashboardPayload>(params.size > 0 ? `/dashboard?${params.toString()}` : '/dashboard', {
       headers: {},
-    }).then((response) => {
-      setPayload(response);
-      if (aulaRef && !response.aulas_disponiveis.includes(aulaRef)) {
-        setAulaRef('');
-      }
-    });
+      signal: controller.signal,
+    })
+      .then((response) => {
+        setPayload(response);
+        if (aulaRef && !response.aulas_disponiveis.includes(aulaRef)) {
+          setAulaRef('');
+        }
+      })
+      .catch((requestError) => {
+        if (requestError instanceof Error && requestError.name === 'AbortError') {
+          return;
+        }
+        setError(
+          requestError instanceof Error ? requestError.message : 'Falha ao carregar o dashboard.',
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
+
+    return () => controller.abort();
   }, [aulaRef, rodadaId, sessaoSenib]);
 
   const historico = payload?.historico ?? [];
-  const seriesBase = historico.length > 0 ? historico.slice(-8).map((item) => item.total_presenca) : [0];
+  const historicoRecente = historico.slice(0, 8).reverse();
+  const seriesBase = historicoRecente.length > 0 ? historicoRecente.map((item) => item.total_presenca) : [0];
   const composicao = payload?.composicao_presenca ?? {};
   const totalAtual = payload?.ultima_rodada?.total_presenca ?? 0;
   const mediaRodada = payload?.media_por_rodada ?? 0;
-  const mediaGeral = payload?.media_geral ?? 0;
   const deltaMedia = mediaRodada ? ((totalAtual - mediaRodada) / mediaRodada) * 100 : 0;
   const totalAlunos = composicao.alunos ?? 0;
   const totalVerdinhos = composicao.verdinhos ?? 0;
@@ -142,7 +172,8 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
       key: 'total',
       label: 'Total Geral',
       value: totalAtual,
-      delta: deltaMedia,
+      metric: formatDelta(deltaMedia),
+      metricLabel: 'vs média por rodada',
       accent: metricPalette.total.accent,
       className: metricPalette.total.backgroundClass,
       series: seriesBase,
@@ -151,46 +182,48 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
       key: 'alunos',
       label: 'Alunos',
       value: totalAlunos,
-      delta: totalAtual ? (totalAlunos / totalAtual) * 100 : 0,
+      metric: formatPercent(totalAtual ? (totalAlunos / totalAtual) * 100 : 0),
+      metricLabel: 'da última leitura',
       accent: metricPalette.alunos.accent,
       className: metricPalette.alunos.backgroundClass,
-      series: seriesBase.map((value) => Math.round(value * (totalAtual ? totalAlunos / totalAtual : 0))),
+      series: [],
     },
     {
       key: 'verdinhos',
       label: 'Verdinhos',
       value: totalVerdinhos,
-      delta: totalAtual ? (totalVerdinhos / totalAtual) * 100 : 0,
+      metric: formatPercent(totalAtual ? (totalVerdinhos / totalAtual) * 100 : 0),
+      metricLabel: 'da última leitura',
       accent: metricPalette.verdinhos.accent,
       className: metricPalette.verdinhos.backgroundClass,
-      series: seriesBase.map((value) => Math.round(value * (totalAtual ? totalVerdinhos / totalAtual : 0))),
+      series: [],
     },
     {
       key: 'amarelinhos',
       label: 'Amarelinhos',
       value: totalAmarelinhos,
-      delta: totalAtual ? (totalAmarelinhos / totalAtual) * 100 : 0,
+      metric: formatPercent(totalAtual ? (totalAmarelinhos / totalAtual) * 100 : 0),
+      metricLabel: 'da última leitura',
       accent: metricPalette.amarelinhos.accent,
       className: metricPalette.amarelinhos.backgroundClass,
-      series: seriesBase.map((value) =>
-        Math.round(value * (totalAtual ? totalAmarelinhos / totalAtual : 0)),
-      ),
+      series: [],
     },
     {
       key: 'professor',
       label: 'Professores',
       value: totalProfessores,
-      delta: totalAtual ? (totalProfessores / totalAtual) * 100 : 0,
+      metric: formatPercent(totalAtual ? (totalProfessores / totalAtual) * 100 : 0),
+      metricLabel: 'da última leitura',
       accent: metricPalette.professor.accent,
       className: metricPalette.professor.backgroundClass,
-      series: seriesBase.map((value) => Math.round(value * (totalAtual ? totalProfessores / totalAtual : 0))),
+      series: [],
     },
   ];
 
   const chartBars = payload?.ranking_materias ?? [];
   const maxBarValue = Math.max(...chartBars.map((item) => item.media), 1);
   const compositionEntries = [
-    { key: 'alunos', label: 'Alunos', value: totalAlunos, color: '#4ea84d' },
+    { key: 'alunos', label: 'Alunos', value: totalAlunos, color: 'hsl(152 46% 29%)' },
     { key: 'verdinhos', label: 'Verdinhos', value: totalVerdinhos, color: '#7cc66f' },
     { key: 'amarelinhos', label: 'Amarelinhos', value: totalAmarelinhos, color: '#d8bf58' },
     { key: 'professor', label: 'Professores', value: totalProfessores, color: '#8fad8f' },
@@ -198,21 +231,23 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   const donutStyle = {
     backgroundImage: buildCompositionGradient(compositionEntries),
   };
-  const historicoRecente = historico.slice(-8);
-  const rankingTop = (payload?.ranking_salas ?? []).slice(0, 5);
-  const maxSalaRankingValue = Math.max(...rankingTop.map((item) => item.media), 1);
+  const rankingSalas = payload?.ranking_salas ?? [];
+  const maxSalaRankingValue = Math.max(...rankingSalas.map((item) => item.media), 1);
   const rankingMateriasTop = payload?.ranking_materias ?? [];
-  const leadingSala = rankingTop[0];
   const leadingMateria = rankingMateriasTop[0];
   const hasCompositionData = totalAtual > 0;
   const hasChartData = chartBars.length > 0;
-  const hasSalaRanking = rankingTop.length > 0;
+  const hasSalaRanking = rankingSalas.length > 0;
   const hasMateriaRanking = rankingMateriasTop.length > 0;
   const totalEquipes = totalVerdinhos + totalAmarelinhos + totalProfessores;
+  const selectedRodada = rodadas.find((rodada) => String(rodada.id) === rodadaId);
+  const scopeLabel = selectedRodada?.referencia ?? 'Todas as rodadas';
+  const sessionLabel = sessaoSenib ? formatSessaoLabel(Number(sessaoSenib)) : 'Sessões juntas';
+  const rankingValueLabel = rodadaId && aulaRef ? 'Total da leitura' : 'Média por leitura';
 
   return (
     <section className="layout-grid">
-      <article className="panel-card span-full dashboard-shell">
+      <article className="panel-card span-full dashboard-shell" aria-busy={loading}>
         <header className="dashboard-topline">
           <div>
             <p className="eyebrow">Indicadores Consolidados</p>
@@ -249,7 +284,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                 ))}
               </select>
             </label>
-            <div className="dashboard-session-switch" role="tablist" aria-label="Sessoes SENIB do dashboard">
+            <div className="dashboard-session-switch" role="group" aria-label="Sessões SENIB do dashboard">
               <button
                 type="button"
                 className={sessaoSenib === '1' ? 'tab-active' : 'tab-button'}
@@ -284,6 +319,17 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
           </div>
         </header>
 
+        {loading ? (
+          <p className="dashboard-request-state" role="status" aria-live="polite">
+            Atualizando indicadores…
+          </p>
+        ) : null}
+        {error ? (
+          <p className="error-banner" role="alert">
+            {error} Altere um filtro para tentar novamente.
+          </p>
+        ) : null}
+
         <div className="dashboard-kpi-grid">
           {kpis.map((card) => (
             <article key={card.key} className={`dashboard-kpi-card ${card.className}`}>
@@ -293,28 +339,30 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               </div>
               <strong>{formatNumber(card.value)}</strong>
               <p>
-                <b>{formatDelta(card.delta)}</b> vs media recente
+                <b>{card.metric}</b> {card.metricLabel}
               </p>
-              <svg viewBox="0 0 100 60" className="dashboard-sparkline" aria-hidden="true">
-                <defs>
-                  <linearGradient id={`spark-${card.key}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={card.accent} stopOpacity="0.34" />
-                    <stop offset="100%" stopColor={card.accent} stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <polygon
-                  points={`0,60 ${buildSparklinePoints(card.series)} 100,60`}
-                  fill={`url(#spark-${card.key})`}
-                />
-                <polyline
-                  points={buildSparklinePoints(card.series)}
-                  fill="none"
-                  stroke={card.accent}
-                  strokeWidth="2.4"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
+              {card.series.length > 1 ? (
+                <svg viewBox="0 0 100 60" className="dashboard-sparkline" aria-hidden="true">
+                  <defs>
+                    <linearGradient id={`spark-${card.key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={card.accent} stopOpacity="0.34" />
+                      <stop offset="100%" stopColor={card.accent} stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <polygon
+                    points={`0,60 ${buildSparklinePoints(card.series)} 100,60`}
+                    fill={`url(#spark-${card.key})`}
+                  />
+                  <polyline
+                    points={buildSparklinePoints(card.series)}
+                    fill="none"
+                    stroke={card.accent}
+                    strokeWidth="2.4"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : null}
             </article>
           ))}
         </div>
@@ -323,7 +371,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
           <article className="dashboard-analytic-panel dashboard-analytic-panel-wide">
             <header className="dashboard-panel-head">
               <div>
-                <h3>Salas e Matérias por Presença</h3>
+                <h3>Matérias por Presença</h3>
                 <p>Leitura atual destacando as matérias mais fortes no recorte selecionado</p>
               </div>
               <span className="dashboard-pill-value">{formatNumber(totalAtual)}</span>
@@ -375,7 +423,9 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                 </p>
               </div>
               <div className="dashboard-history-pills">
-                <span className="dashboard-chip">Média {formatNumber(Math.round(mediaGeral))}</span>
+                <span className="dashboard-chip">
+                  Média por rodada {formatNumber(Math.round(mediaRodada))}
+                </span>
                 <span className="dashboard-chip dashboard-chip-strong">
                   Pico {formatNumber(Math.max(...seriesBase, 0))}
                 </span>
@@ -383,7 +433,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
             </header>
             <div className="dashboard-history-summary">
               <article>
-                <span>Última Aula</span>
+                <span>Última leitura</span>
                 <strong>{formatNumber(totalAtual)}</strong>
               </article>
               <article>
@@ -487,11 +537,11 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
             <header className="dashboard-panel-head">
               <div>
                 <h3>Ranking de Matérias</h3>
-                <p>{payload?.ultima_rodada?.referencia ?? 'Sem rodada consolidada'}</p>
+                <p>{scopeLabel}</p>
               </div>
               <span className="dashboard-chip">
                 {payload?.ultima_rodada
-                  ? formatSessaoLabel(payload.ultima_rodada.sessao_senib)
+                  ? sessionLabel
                   : 'Sem sessao'}
               </span>
             </header>
@@ -499,7 +549,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
               <div className="dashboard-ranking-highlight">
                 <span>Matéria em destaque</span>
                 <strong>{leadingMateria.materia}</strong>
-                <small>{formatNumber(leadingMateria.media)} presenças consolidadas</small>
+                <small>{formatNumber(leadingMateria.media)} de média por leitura</small>
               </div>
             ) : null}
             {hasMateriaRanking ? (
@@ -510,7 +560,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                       <span className="dashboard-ranking-position">{index + 1}</span>
                       <div>
                         <strong>{item.materia}</strong>
-                        <small>Média consolidada da matéria</small>
+                        <small>Média por leitura da matéria</small>
                       </div>
                     </div>
                     <div className="dashboard-ranking-track">
@@ -518,9 +568,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                         className="dashboard-ranking-fill dashboard-ranking-fill-materia"
                         style={{
                           width: `${clampPercent(
-                            (item.media /
-                              Math.max(...rankingMateriasTop.map((entry) => entry.media), 1)) *
-                              100,
+                            (item.media / maxBarValue) * 100,
                           )}%`,
                         }}
                       />
@@ -537,42 +585,56 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
             )}
           </article>
 
-          <article className="dashboard-analytic-panel">
+          <article className="dashboard-analytic-panel dashboard-room-ranking-panel">
             <header className="dashboard-panel-head">
               <div>
                 <h3>Ranking de Salas</h3>
-                <p>{payload?.ultima_rodada?.referencia ?? 'Sem rodada consolidada'}</p>
+                <p>{rankingValueLabel} · {scopeLabel}</p>
               </div>
-              <span className="dashboard-chip">{payload?.ultima_rodada ? formatSessaoLabel(payload.ultima_rodada.sessao_senib) : 'Sem sessao'}</span>
+              <span className="dashboard-chip">
+                {aulaRef ? formatAulaLabel(aulaRef) : sessionLabel}
+              </span>
             </header>
-            {leadingSala ? (
-              <div className="dashboard-ranking-highlight">
-                <span>Líder da rodada</span>
-                <strong>{leadingSala.sala}</strong>
-                <small>{formatNumber(leadingSala.media)} presenças consolidadas</small>
-              </div>
-            ) : null}
             {hasSalaRanking ? (
-              <ul className="dashboard-ranking-list">
-                {rankingTop.map((item, index) => (
-                  <li key={item.sala}>
-                    <div className="dashboard-ranking-copy">
-                      <span className="dashboard-ranking-position">{index + 1}</span>
-                      <div>
+              <ol className="dashboard-room-ranking-list">
+                {rankingSalas.map((item, index) => (
+                  <li key={`${item.sessao_senib}-${item.sala}`}>
+                    <div className="dashboard-room-ranking-head">
+                      <span
+                        className={`dashboard-room-rank-position dashboard-room-rank-position-${Math.min(index + 1, 4)}`}
+                        aria-label={`${index + 1}º lugar`}
+                      >
+                        {index + 1}
+                      </span>
+                      <div className="dashboard-room-ranking-copy">
                         <strong>{item.sala}</strong>
-                        <small>Média local consolidada</small>
+                        <small>
+                          {rankingValueLabel}
+                          {item.total_leituras > 1 ? ` · ${item.total_leituras} leituras` : ''}
+                          {!sessaoSenib ? ` · ${formatSessaoLabel(item.sessao_senib)}` : ''}
+                        </small>
                       </div>
+                      <strong className="dashboard-room-ranking-total">
+                        {formatNumber(Math.round(item.media))}
+                      </strong>
                     </div>
-                    <div className="dashboard-ranking-track">
+                    <div className="dashboard-room-ranking-track" aria-hidden="true">
                       <div
-                        className="dashboard-ranking-fill"
+                        className="dashboard-room-ranking-fill"
                         style={{ width: `${clampPercent((item.media / maxSalaRankingValue) * 100)}%` }}
                       />
                     </div>
-                    <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
+                    <div className="dashboard-room-ranking-breakdown">
+                      <span>Alunos <b>{formatNumber(Math.round(item.alunos))}</b></span>
+                      <span>Verdinhos <b>{formatNumber(Math.round(item.verdinhos))}</b></span>
+                      <span className="dashboard-room-chip-amber">
+                        Amarelinhos <b>{formatNumber(Math.round(item.amarelinhos))}</b>
+                      </span>
+                      <span>Prof. <b>{formatNumber(Math.round(item.professor))}</b></span>
+                    </div>
                   </li>
                 ))}
-              </ul>
+              </ol>
             ) : (
               <div className="dashboard-empty-state dashboard-empty-state-ranking">
                 <strong>Nenhuma sala consolidada</strong>
