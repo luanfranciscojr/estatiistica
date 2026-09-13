@@ -256,6 +256,7 @@ model UmComDeus {
   ordem           Int
   nome            String      @db.VarChar(80)
   participantes   Int         @default(0)
+  amarelinhos     Int         @default(0)
   lideres         Int         @default(0)
   total           Int         @default(0)
   status          CultoStatus @default(ativa)

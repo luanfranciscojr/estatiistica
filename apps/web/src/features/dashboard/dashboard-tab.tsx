@@ -89,7 +89,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   }
   if (operation === 'um_com_deus' || operation === 'nova_baby' || operation === 'nova_infantil' || operation === 'nova_kids') {
     const config = ({
-      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus', participantLabel: 'Participantes' },
+      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus', participantLabel: 'Participantes', includeAmarelinhos: true },
       nova_baby: { programa: 'nova-baby', label: 'Nova Baby', participantLabel: 'Participantes' },
       nova_infantil: { programa: 'nova-infantil', label: 'Nova Infantil', participantLabel: 'Crianças' },
       nova_kids: { programa: 'nova-kids', label: 'Nova Kids', participantLabel: 'Crianças' },

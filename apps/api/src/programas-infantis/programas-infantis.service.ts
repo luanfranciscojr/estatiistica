@@ -11,6 +11,7 @@ type ProgramaRow = {
   ordem: number;
   nome: string;
   participantes: number;
+  amarelinhos: number;
   lideres: number;
   total: number;
   status: string;
@@ -41,7 +42,7 @@ export class ProgramasInfantisService {
     const { table } = this.config(programa);
     const query = `
       SELECT id, DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia,
-        ordem, nome, participantes, lideres, total, status
+        ordem, nome, participantes, ${programa === 'um-com-deus' ? 'amarelinhos' : '0 AS amarelinhos'}, lideres, total, status
       FROM ${table}
       ${dataRef ? 'WHERE dataReferencia = ?' : ''}
       ORDER BY dataReferencia DESC, ordem ASC
@@ -68,11 +69,12 @@ export class ProgramasInfantisService {
   }
 
   async preparar(programa: ProgramaInfantil, dataReferencia: string, actorUserId: number) {
-    const { table, label } = this.config(programa);
+    const { table } = this.config(programa);
+    const hasAmarelinhos = programa === 'um-com-deus';
     for (const ordem of [1, 2]) {
       await this.prisma.$executeRawUnsafe(
-        `INSERT INTO ${table} (dataReferencia, ordem, nome, participantes, lideres, total, status, createdByUserId, updatedByUserId, createdAt, updatedAt)
-         VALUES (?, ?, ?, 0, 0, 0, 'ativa', ?, ?, NOW(3), NOW(3))
+        `INSERT INTO ${table} (dataReferencia, ordem, nome, participantes, ${hasAmarelinhos ? 'amarelinhos, ' : ''}lideres, total, status, createdByUserId, updatedByUserId, createdAt, updatedAt)
+         VALUES (?, ?, ?, 0, ${hasAmarelinhos ? '0, ' : ''}0, 0, 'ativa', ?, ?, NOW(3), NOW(3))
          ON DUPLICATE KEY UPDATE nome = VALUES(nome), status = 'ativa', updatedByUserId = VALUES(updatedByUserId), updatedAt = NOW(3)`,
         dataReferencia, ordem, this.nomeEncontro(programa, ordem), actorUserId, actorUserId,
       );
@@ -108,21 +110,24 @@ export class ProgramasInfantisService {
     );
     if (!atual) throw new NotFoundException(`${this.config(programa).label} não encontrado.`);
     const participantes = dto.participantes ?? atual.participantes;
+    const amarelinhos = programa === 'um-com-deus' ? dto.amarelinhos ?? atual.amarelinhos : 0;
     const lideres = dto.lideres ?? atual.lideres;
-    if (participantes < 0 || lideres < 0) {
+    if (participantes < 0 || amarelinhos < 0 || lideres < 0) {
       throw new UnprocessableEntityException('As contagens não podem ser negativas.');
     }
-    const total = participantes + lideres;
+    const total = participantes + amarelinhos + lideres;
     await this.prisma.$executeRawUnsafe(
-      `UPDATE ${table} SET participantes = ?, lideres = ?, total = ?, updatedByUserId = ?, updatedAt = NOW(3) WHERE id = ?`,
-      participantes, lideres, total, actorUserId, id,
+      `UPDATE ${table} SET participantes = ?, ${programa === 'um-com-deus' ? 'amarelinhos = ?, ' : ''}lideres = ?, total = ?, updatedByUserId = ?, updatedAt = NOW(3) WHERE id = ?`,
+      ...(programa === 'um-com-deus'
+        ? [participantes, amarelinhos, lideres, total, actorUserId, id]
+        : [participantes, lideres, total, actorUserId, id]),
     );
     await this.auditoriaService.registrar({
       actorUserId,
       acao: `${programa}.update`,
       entidade: programa,
       entidadeId: String(id),
-      payload: { data_referencia: atual.data_referencia, ordem: atual.ordem, participantes, lideres, total },
+      payload: { data_referencia: atual.data_referencia, ordem: atual.ordem, participantes, amarelinhos, lideres, total },
     });
     return this.getPainel(programa, atual.data_referencia);
   }
@@ -146,12 +151,14 @@ export class ProgramasInfantisService {
       const itens = filtrados.filter((item) => item.ordem === ordem);
       const total = itens.reduce((sum, item) => sum + item.total, 0);
       const participantes = itens.reduce((sum, item) => sum + item.participantes, 0);
+      const amarelinhos = itens.reduce((sum, item) => sum + item.amarelinhos, 0);
       const lideres = itens.reduce((sum, item) => sum + item.lideres, 0);
       return {
         ordem,
         nome: this.nomeEncontro(programa, ordem),
         media_total: itens.length ? total / itens.length : 0,
         media_participantes: itens.length ? participantes / itens.length : 0,
+        media_amarelinhos: itens.length ? amarelinhos / itens.length : 0,
         media_lideres: itens.length ? lideres / itens.length : 0,
         ultimo_total: ultima?.encontros.find((item) => item.ordem === ordem)?.total ?? 0,
       };

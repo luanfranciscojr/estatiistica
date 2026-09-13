@@ -9,5 +9,10 @@ export class UpdateProgramaDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  amarelinhos?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   lideres?: number;
 }

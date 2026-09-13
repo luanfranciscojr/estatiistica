@@ -24,7 +24,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
   }
   if (operation === 'um_com_deus' || operation === 'nova_baby' || operation === 'nova_infantil' || operation === 'nova_kids') {
     const config = ({
-      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus', participantLabel: 'Participantes' },
+      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus', participantLabel: 'Participantes', includeAmarelinhos: true },
       nova_baby: { programa: 'nova-baby', label: 'Nova Baby', participantLabel: 'Participantes' },
       nova_infantil: { programa: 'nova-infantil', label: 'Nova Infantil', participantLabel: 'Crianças' },
       nova_kids: { programa: 'nova-kids', label: 'Nova Kids', participantLabel: 'Crianças' },
@@ -158,7 +158,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
       .flatMap((sala) => {
         if (sala.materias.length === 0) {
           return [
-            `${sala.nome}\n\nAlunos: ${sala.contagens.alunos ?? 0}\nVerdinhos: ${sala.contagens.verdinhos ?? 0}\nAmarelinhos: ${sala.contagens.amarelinhos ?? 0}\nProfessores: ${sala.contagens.professor ?? 0}`,
+            `${sala.nome}\n\nAlunos: ${sala.contagens.alunos ?? 0}\nVerdinhos: ${sala.contagens.verdinhos ?? 0}\nProfessores: ${sala.contagens.professor ?? 0}`,
           ];
         }
 
@@ -170,7 +170,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                 ? `${sala.nome} - ${materia.materia}`
                 : materia.materia;
 
-            return `${reference}\n\nAlunos: ${sala.contagens.alunos ?? 0}\nVerdinhos: ${sala.contagens.verdinhos ?? 0}\nAmarelinhos: ${sala.contagens.amarelinhos ?? 0}\nProfessores: ${sala.contagens.professor ?? 0}`;
+            return `${reference}\n\nAlunos: ${sala.contagens.alunos ?? 0}\nVerdinhos: ${sala.contagens.verdinhos ?? 0}\nProfessores: ${sala.contagens.professor ?? 0}`;
           },
         );
       })
@@ -348,7 +348,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                   <span className="counter-total">{formatNumber(sala.total)}</span>
                 </div>
                 <div className="counter-body">
-                  {categoryLabels.map(([key, label]) => {
+                  {categoryLabels.filter(([key]) => key !== 'amarelinhos').map(([key, label]) => {
                     const contagemId = sala.contagem_id;
                     return (
                       <div key={key} className="counter-row">
@@ -466,7 +466,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                       <li key={`${item.sala}-${index}`}>
                         <strong>{item.sala}</strong>{' '}
                         {Object.entries(item.contagens)
-                          .filter((entry) => entry[1] !== undefined)
+                          .filter(([key, value]) => key !== 'amarelinhos' && value !== undefined)
                           .map(([key, value]) => `${({ alunos: 'Alunos', verdinhos: 'Verdinhos', amarelinhos: 'Amarelinhos', professor: 'Professores' } as Record<string, string>)[key] ?? key}: ${value}`)
                           .join(' · ')}
                       </li>

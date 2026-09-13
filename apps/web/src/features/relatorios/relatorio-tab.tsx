@@ -6,20 +6,12 @@ import type { RelatorioSemanalPayload } from '../../types/contracts';
 
 type ManualValues = {
   cultoNj: string;
-  novaInfantil1: string;
-  novaInfantil2: string;
-  novaKids1: string;
-  novaKids2: string;
   batismo1: string;
   batismo2: string;
 };
 
 const initialManualValues: ManualValues = {
   cultoNj: '',
-  novaInfantil1: '0',
-  novaInfantil2: '0',
-  novaKids1: '0',
-  novaKids2: '0',
   batismo1: '0',
   batismo2: '0',
 };
@@ -64,10 +56,10 @@ function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
       payload.nova_teens.find((item) => item.ordem === session)?.participantes ?? 0;
     const novaBaby =
       payload.nova_baby.find((item) => item.ordem === session)?.participantes ?? 0;
-    const novaInfantil = numberValue(
-      session === 1 ? manual.novaInfantil1 : manual.novaInfantil2,
-    );
-    const novaKids = numberValue(session === 1 ? manual.novaKids1 : manual.novaKids2);
+    const novaInfantil =
+      payload.nova_infantil.find((item) => item.ordem === session)?.participantes ?? 0;
+    const novaKids =
+      payload.nova_kids.find((item) => item.ordem === session)?.participantes ?? 0;
     const batismo = numberValue(session === 1 ? manual.batismo1 : manual.batismo2);
 
     lines.push('', `*${period}*`, '', `*Senib ${session}*`, '');
@@ -196,7 +188,7 @@ export function RelatorioTab() {
               <p className="eyebrow">Preenchimento Manual</p>
               <h3>Dados complementares</h3>
             </div>
-            <span className="report-manual-badge">7 campos</span>
+            <span className="report-manual-badge">3 campos</span>
           </header>
 
           <label className="field">
@@ -213,16 +205,6 @@ export function RelatorioTab() {
             <strong>Manhã</strong>
             <div className="report-manual-grid">
               <ManualNumberField
-                label="Nova Infantil"
-                value={manual.novaInfantil1}
-                onChange={(value) => updateManual('novaInfantil1', value)}
-              />
-              <ManualNumberField
-                label="Nova Kids"
-                value={manual.novaKids1}
-                onChange={(value) => updateManual('novaKids1', value)}
-              />
-              <ManualNumberField
                 label="Batismo"
                 value={manual.batismo1}
                 onChange={(value) => updateManual('batismo1', value)}
@@ -233,16 +215,6 @@ export function RelatorioTab() {
           <div className="report-period-block">
             <strong>Tarde</strong>
             <div className="report-manual-grid">
-              <ManualNumberField
-                label="Nova Infantil"
-                value={manual.novaInfantil2}
-                onChange={(value) => updateManual('novaInfantil2', value)}
-              />
-              <ManualNumberField
-                label="Nova Kids"
-                value={manual.novaKids2}
-                onChange={(value) => updateManual('novaKids2', value)}
-              />
               <ManualNumberField
                 label="Batismo"
                 value={manual.batismo2}

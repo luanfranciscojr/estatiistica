@@ -5,7 +5,7 @@ import { apiFetch } from '../../lib/api';
 import { formatDateOnly, formatNumber } from '../../lib/format';
 import type { ProgramaInfantilPainelPayload, SessionUser } from '../../types/contracts';
 
-export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 'Participantes', user }: { programa: 'um-com-deus' | 'nova-baby' | 'nova-infantil' | 'nova-kids'; label: string; participantLabel?: string; user: SessionUser }) {
+export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 'Participantes', includeAmarelinhos = false, user }: { programa: 'um-com-deus' | 'nova-baby' | 'nova-infantil' | 'nova-kids'; label: string; participantLabel?: string; includeAmarelinhos?: boolean; user: SessionUser }) {
   const [painel, setPainel] = useState<ProgramaInfantilPainelPayload | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
 
   useEffect(() => { loadPainel(); }, [selectedDate, programa]);
 
-  async function changeCount(id: number, field: 'participantes' | 'lideres', value: number) {
+  async function changeCount(id: number, field: 'participantes' | 'amarelinhos' | 'lideres', value: number) {
     await apiFetch(`/${programa}/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ [field]: Math.max(value, 0) }),
@@ -72,7 +72,7 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
             <section key={encontro.id} className="counter-card culto-counter-card">
               <div className="counter-head"><div><strong>{encontro.nome}</strong><span>{painel?.data_atual ? formatDateOnly(painel.data_atual) : 'Sem data'}</span></div><span className="counter-total">{formatNumber(encontro.total)}</span></div>
               <div className="counter-stack">
-                {([['participantes', participantLabel], ['lideres', equipeLabel]] as const).map(([field, fieldLabel]) => (
+                {([['participantes', participantLabel], ...(includeAmarelinhos ? [['amarelinhos', 'Amarelinhos'] as const] : []), ['lideres', equipeLabel]] as const).map(([field, fieldLabel]) => (
                   <div key={field} className="counter-row"><span>{fieldLabel}</span><div className="counter-actions"><button type="button" className="mini-button" aria-label={`Diminuir ${fieldLabel}`} onClick={() => changeCount(encontro.id, field, encontro[field] - 1)}>-</button><input className="counter-input" type="number" min="0" defaultValue={encontro[field]} aria-label={`${fieldLabel} em ${encontro.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={(event) => { const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== encontro[field]) void changeCount(encontro.id, field, value); else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(encontro[field]); }} /><button type="button" className="mini-button" aria-label={`Aumentar ${fieldLabel}`} onClick={() => changeCount(encontro.id, field, encontro[field] + 1)}>+</button></div></div>
                 ))}
               </div>

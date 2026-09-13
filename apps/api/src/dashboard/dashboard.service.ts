@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 type ProgramaRankingRow = {
   ordem: number;
   participantes: number;
+  amarelinhos: number;
   lideres: number;
   total: number;
 };
@@ -66,16 +67,16 @@ export class DashboardService {
       orderBy: { createdAt: 'desc' },
       }),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, lideres, total FROM UmComDeus ORDER BY dataReferencia DESC, ordem ASC',
+        'SELECT ordem, participantes, amarelinhos, lideres, total FROM UmComDeus ORDER BY dataReferencia DESC, ordem ASC',
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, lideres, total FROM NovaBaby ORDER BY dataReferencia DESC, ordem ASC',
+        'SELECT ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaBaby ORDER BY dataReferencia DESC, ordem ASC',
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, lideres, total FROM NovaInfantil ORDER BY dataReferencia DESC, ordem ASC',
+        'SELECT ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaInfantil ORDER BY dataReferencia DESC, ordem ASC',
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, lideres, total FROM NovaKids ORDER BY dataReferencia DESC, ordem ASC',
+        'SELECT ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaKids ORDER BY dataReferencia DESC, ordem ASC',
       ),
     ]);
 
@@ -190,6 +191,7 @@ export class DashboardService {
       if (filteredRows.length === 0) return [];
       const total = filteredRows.reduce((sum, item) => sum + item.total, 0);
       const participantes = filteredRows.reduce((sum, item) => sum + item.participantes, 0);
+      const amarelinhos = filteredRows.reduce((sum, item) => sum + item.amarelinhos, 0);
       const professores = filteredRows.reduce((sum, item) => sum + item.lideres, 0);
       return [{
         tipo: 'programa' as const,
@@ -199,7 +201,7 @@ export class DashboardService {
         media: total / filteredRows.length,
         alunos: 0,
         verdinhos: 0,
-        amarelinhos: 0,
+        amarelinhos: amarelinhos / filteredRows.length,
         professor: 0,
         participantes: participantes / filteredRows.length,
         professores: professores / filteredRows.length,

@@ -45,7 +45,7 @@ export class RelatoriosService {
   async getSemanal(dataReferencia: string) {
     const aulaRef = this.formatAulaRef(dataReferencia);
 
-    const [rodada, cultos, novaTeens, novaBaby] = await Promise.all([
+    const [rodada, cultos, novaTeens, novaBaby, novaInfantil, novaKids] = await Promise.all([
       this.prisma.rodada.findFirst({
         where: { contagens: { some: { aulaRef } } },
         orderBy: { updatedAt: 'desc' },
@@ -67,6 +67,14 @@ export class RelatoriosService {
       ),
       this.prisma.$queryRawUnsafe<OrdemParticipantesRow[]>(
         'SELECT ordem, participantes, total FROM NovaBaby WHERE dataReferencia = ? ORDER BY ordem ASC',
+        dataReferencia,
+      ),
+      this.prisma.$queryRawUnsafe<OrdemParticipantesRow[]>(
+        'SELECT ordem, participantes, total FROM NovaInfantil WHERE dataReferencia = ? ORDER BY ordem ASC',
+        dataReferencia,
+      ),
+      this.prisma.$queryRawUnsafe<OrdemParticipantesRow[]>(
+        'SELECT ordem, participantes, total FROM NovaKids WHERE dataReferencia = ? ORDER BY ordem ASC',
         dataReferencia,
       ),
     ]);
@@ -114,6 +122,12 @@ export class RelatoriosService {
       if (!novaBaby.some((item) => item.ordem === ordem)) {
         avisos.push(`Nova Baby ${ordem} não encontrado para a data selecionada.`);
       }
+      if (!novaInfantil.some((item) => item.ordem === ordem)) {
+        avisos.push(`Nova Infantil ${ordem} não encontrado para a data selecionada.`);
+      }
+      if (!novaKids.some((item) => item.ordem === ordem)) {
+        avisos.push(`Nova Kids ${ordem} não encontrado para a data selecionada.`);
+      }
     }
 
     return {
@@ -133,6 +147,14 @@ export class RelatoriosService {
       nova_baby: [1, 2].map((ordem) => ({
         ordem,
         participantes: novaBaby.find((item) => item.ordem === ordem)?.participantes ?? 0,
+      })),
+      nova_infantil: [1, 2].map((ordem) => ({
+        ordem,
+        participantes: novaInfantil.find((item) => item.ordem === ordem)?.participantes ?? 0,
+      })),
+      nova_kids: [1, 2].map((ordem) => ({
+        ordem,
+        participantes: novaKids.find((item) => item.ordem === ordem)?.participantes ?? 0,
       })),
       avisos,
     };

@@ -29,6 +29,8 @@ export type RelatorioSemanalPayload = {
   cultos: Array<{ ordem: number; total: number }>;
   nova_teens: Array<{ ordem: number; participantes: number }>;
   nova_baby: Array<{ ordem: number; participantes: number }>;
+  nova_infantil: Array<{ ordem: number; participantes: number }>;
+  nova_kids: Array<{ ordem: number; participantes: number }>;
   avisos: string[];
 };
 
@@ -40,6 +42,7 @@ export type ProgramaInfantilPainelPayload = {
     ordem: number;
     nome: string;
     participantes: number;
+    amarelinhos: number;
     lideres: number;
     total: number;
     status: string;
@@ -69,6 +72,7 @@ export type ProgramaInfantilDashboardPayload = {
     nome: string;
     media_total: number;
     media_participantes: number;
+    media_amarelinhos?: number;
     media_lideres: number;
     ultimo_total: number;
   }>;
