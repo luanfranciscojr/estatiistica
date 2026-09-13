@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+type ProgramaRankingRow = {
+  ordem: number;
+  participantes: number;
+  lideres: number;
+  total: number;
+};
+
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
@@ -30,7 +37,8 @@ export class DashboardService {
           }
         : {}),
     };
-    const rodadas = await this.prisma.rodada.findMany({
+    const [rodadas, umComDeus, novaBaby] = await Promise.all([
+      this.prisma.rodada.findMany({
       where,
       include: {
         contagens: {
@@ -56,7 +64,14 @@ export class DashboardService {
         },
       },
       orderBy: { createdAt: 'desc' },
-    });
+      }),
+      this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
+        'SELECT ordem, participantes, lideres, total FROM UmComDeus ORDER BY dataReferencia DESC, ordem ASC',
+      ),
+      this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
+        'SELECT ordem, participantes, lideres, total FROM NovaBaby ORDER BY dataReferencia DESC, ordem ASC',
+      ),
+    ]);
 
     const aulasDisponiveis = [
       ...new Set(
@@ -103,11 +118,22 @@ export class DashboardService {
         professor: number;
         count: number;
         sala: string;
+        materia: string;
         sessaoSenib: number;
       }
     >();
+    const materiaPorSala = new Map(
+      rodadas.flatMap((rodada) =>
+        rodada.materias.map((materia) => [
+          `${rodada.id}:${materia.sessaoSenib}:${materia.sala}`,
+          materia.materia,
+        ] as const),
+      ),
+    );
     for (const item of allContagens) {
       const key = `${item.sala.sessaoSenib}:${item.sala.nome}`;
+      const materia =
+        materiaPorSala.get(`${item.rodadaId}:${item.sala.sessaoSenib}:${item.sala.codigo}`) ?? '';
       const current = salaStats.get(key) ?? {
         total: 0,
         alunos: 0,
@@ -116,6 +142,7 @@ export class DashboardService {
         professor: 0,
         count: 0,
         sala: item.sala.nome,
+        materia,
         sessaoSenib: item.sala.sessaoSenib,
       };
       current.total += item.total;
@@ -129,15 +156,52 @@ export class DashboardService {
 
     const rankingSalas = [...salaStats.entries()]
       .map(([, stats]) => ({
+        tipo: 'sala' as const,
         sala: stats.sala,
+        materia: stats.materia,
         sessao_senib: stats.sessaoSenib,
         media: stats.count > 0 ? stats.total / stats.count : 0,
         alunos: stats.count > 0 ? stats.alunos / stats.count : 0,
         verdinhos: stats.count > 0 ? stats.verdinhos / stats.count : 0,
         amarelinhos: stats.count > 0 ? stats.amarelinhos / stats.count : 0,
         professor: stats.count > 0 ? stats.professor / stats.count : 0,
+        participantes: stats.count > 0 ? stats.alunos / stats.count : 0,
+        professores: stats.count > 0 ? stats.professor / stats.count : 0,
         total_leituras: stats.count,
       }))
+      .sort((a, b) => b.media - a.media);
+
+    const rankingProgramas = !rodadaId && !aulaRef
+      ? [
+          ['Um com Deus', umComDeus],
+          ['Nova Baby', novaBaby],
+        ].flatMap(([nome, rows]) => {
+          const typedRows = rows as ProgramaRankingRow[];
+          const filteredRows = sessaoSenib
+            ? typedRows.filter((item) => item.ordem === sessaoSenib)
+            : typedRows;
+          if (filteredRows.length === 0) return [];
+          const total = filteredRows.reduce((sum, item) => sum + item.total, 0);
+          const participantes = filteredRows.reduce((sum, item) => sum + item.participantes, 0);
+          const professores = filteredRows.reduce((sum, item) => sum + item.lideres, 0);
+          return [{
+            tipo: 'programa' as const,
+            sala: nome as string,
+            materia: 'Participantes',
+            sessao_senib: sessaoSenib ?? 0,
+            media: total / filteredRows.length,
+            alunos: 0,
+            verdinhos: 0,
+            amarelinhos: 0,
+            professor: 0,
+            participantes: participantes / filteredRows.length,
+            professores: professores / filteredRows.length,
+            total_leituras: filteredRows.length,
+          }];
+        })
+      : [];
+
+    const rankingSalasEProgramas = [...rankingSalas, ...rankingProgramas]
       .sort((a, b) => b.media - a.media);
 
     const materiaStats = new Map<string, { total: number; count: number }>();
@@ -185,7 +249,7 @@ export class DashboardService {
       media_geral: Number(mediaGeral.toFixed(1)),
       aulas_disponiveis: aulasDisponiveis,
       aula_atual: aulaRef ?? null,
-      ranking_salas: rankingSalas,
+      ranking_salas: rankingSalasEProgramas,
       ranking_materias: rankingMaterias,
       composicao_presenca: composicaoPresenca,
       historico,

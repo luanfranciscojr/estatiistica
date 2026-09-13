@@ -733,10 +733,17 @@ textarea {
 .room-and-parser-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+  gap: 18px;
   align-items: flex-start;
 }
 
 .room-and-parser-grid > .counter-grid {
+  min-width: 0;
+}
+
+.counter-grid,
+.counter-card,
+.parser-sidecard {
   min-width: 0;
 }
 
@@ -850,6 +857,30 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  min-width: 0;
+}
+
+.counter-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.counter-card .counter-row {
+  gap: 8px;
+}
+
+.counter-card .counter-actions {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.counter-card .counter-actions .mini-button {
+  min-width: 34px;
+  padding: 0 8px;
+}
+
+.counter-card .counter-input {
+  width: 48px;
 }
 
 .counter-head > div {

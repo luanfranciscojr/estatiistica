@@ -109,13 +109,17 @@ export type DashboardPayload = {
   aulas_disponiveis: string[];
   aula_atual: string | null;
   ranking_salas: Array<{
+    tipo: 'sala' | 'programa';
     sala: string;
+    materia: string;
     sessao_senib: number;
     media: number;
     alunos: number;
     verdinhos: number;
     amarelinhos: number;
     professor: number;
+    participantes: number;
+    professores: number;
     total_leituras: number;
   }>;
   ranking_materias: Array<{ materia: string; media: number }>;

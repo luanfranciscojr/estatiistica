@@ -152,7 +152,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
       .flatMap((sala) => {
         if (sala.materias.length === 0) {
           return [
-            `${sala.nome} alunos ${sala.contagens.alunos ?? 0} verdinhos ${sala.contagens.verdinhos ?? 0} amarelinhos ${sala.contagens.amarelinhos ?? 0} professor ${sala.contagens.professor ?? 0}`,
+            `${sala.nome}\n\nAlunos: ${sala.contagens.alunos ?? 0}\nVerdinhos: ${sala.contagens.verdinhos ?? 0}\nAmarelinhos: ${sala.contagens.amarelinhos ?? 0}\nProfessores: ${sala.contagens.professor ?? 0}`,
           ];
         }
 
@@ -164,7 +164,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                 ? `${sala.nome} - ${materia.materia}`
                 : materia.materia;
 
-            return `${reference} alunos ${sala.contagens.alunos ?? 0} verdinhos ${sala.contagens.verdinhos ?? 0} amarelinhos ${sala.contagens.amarelinhos ?? 0} professor ${sala.contagens.professor ?? 0}`;
+            return `${reference}\n\nAlunos: ${sala.contagens.alunos ?? 0}\nVerdinhos: ${sala.contagens.verdinhos ?? 0}\nAmarelinhos: ${sala.contagens.amarelinhos ?? 0}\nProfessores: ${sala.contagens.professor ?? 0}`;
           },
         );
       })
@@ -425,7 +425,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                   name="texto_parser"
                   value={parserText}
                   onChange={(event) => setParserText(event.target.value)}
-                  placeholder="História da Igreja alunos 0 verdinhos 0 amarelinhos 0 professor 0"
+                  placeholder={'ATOS\n\nAlunos: 0\nVerdinhos: 0\nAmarelinhos: 0\nProfessores: 0'}
                   rows={7}
                 />
               </label>
@@ -461,7 +461,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                         <strong>{item.sala}</strong>{' '}
                         {Object.entries(item.contagens)
                           .filter((entry) => entry[1] !== undefined)
-                          .map(([key, value]) => `${key}: ${value}`)
+                          .map(([key, value]) => `${({ alunos: 'Alunos', verdinhos: 'Verdinhos', amarelinhos: 'Amarelinhos', professor: 'Professores' } as Record<string, string>)[key] ?? key}: ${value}`)
                           .join(' · ')}
                       </li>
                     ))}

@@ -46,14 +46,14 @@ function numberValue(value: string) {
 
 function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
   const lines = [
-    'NIB TABERNÁCULO',
+    '*NIB TABERNÁCULO*',
     '',
-    `Sábado (${shortDate(payload.data_sabado)})`,
+    `*Sábado (${shortDate(payload.data_sabado)})*`,
     `Culto NJ: ${manual.cultoNj.trim() || 'Não informado'}`,
     '',
     '---',
     '',
-    `Domingo (${shortDate(payload.data_referencia)})`,
+    `*Domingo (${shortDate(payload.data_referencia)})*`,
   ];
 
   for (const session of [1, 2]) {
@@ -70,20 +70,20 @@ function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
     const novaKids = numberValue(session === 1 ? manual.novaKids1 : manual.novaKids2);
     const batismo = numberValue(session === 1 ? manual.batismo1 : manual.batismo2);
 
-    lines.push('', period, '', `Senib ${session}`, '');
+    lines.push('', `*${period}*`, '', `*Senib ${session}*`, '');
     for (const sala of senib?.salas ?? []) {
       lines.push(`${sala.materia} (${sala.local}): ${sala.total}`);
     }
     lines.push(
-      `Total Senib ${session}: ${senib?.total ?? 0}`,
+      `*Total Senib ${session}: ${senib?.total ?? 0}*`,
       '',
-      `Nova Baby: ${novaBaby} bebês`,
-      `Nova Infantil: ${novaInfantil} crianças`,
-      `Nova Kids: ${novaKids} crianças`,
-      `Nova Teens: ${novaTeens} adolescentes`,
+      `*Nova Baby:* ${novaBaby} bebês`,
+      `*Nova Infantil:* ${novaInfantil} crianças`,
+      `*Nova Kids:* ${novaKids} crianças`,
+      `*Nova Teens:* ${novaTeens} adolescentes`,
       '',
-      `Batismo: ${batismo}`,
-      `Culto: ${culto}`,
+      `*Batismo:* ${batismo}`,
+      `*Culto:* ${culto}`,
     );
 
     if (session === 1) {

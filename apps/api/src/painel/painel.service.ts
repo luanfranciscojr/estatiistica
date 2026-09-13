@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { CategoriaContagem, OperacaoContagem, Prisma } from '@prisma/client';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { expandMateriaAliases } from '../common/materia-aliases';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateContagemDto } from './dto/update-contagem.dto';
 
@@ -68,10 +69,12 @@ export class PainelService {
       materiasSessao
         .filter((materia) => {
           const normalizedMateria = this.normalizeSalaToken(materia.materia);
-          return (
-            normalizedMateria === normalizedReference ||
-            normalizedMateria.includes(normalizedReference) ||
-            normalizedReference.includes(normalizedMateria)
+          const references = expandMateriaAliases(normalizedReference);
+          return [...references].some(
+            (reference) =>
+              normalizedMateria === reference ||
+              normalizedMateria.includes(reference) ||
+              reference.includes(normalizedMateria),
           );
         })
         .map((materia) => this.normalizeSalaToken(materia.sala)),

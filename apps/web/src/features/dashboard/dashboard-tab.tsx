@@ -220,8 +220,6 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
     },
   ];
 
-  const chartBars = payload?.ranking_materias ?? [];
-  const maxBarValue = Math.max(...chartBars.map((item) => item.media), 1);
   const compositionEntries = [
     { key: 'alunos', label: 'Alunos', value: totalAlunos, color: 'hsl(152 46% 29%)' },
     { key: 'verdinhos', label: 'Verdinhos', value: totalVerdinhos, color: '#7cc66f' },
@@ -233,17 +231,13 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   };
   const rankingSalas = payload?.ranking_salas ?? [];
   const maxSalaRankingValue = Math.max(...rankingSalas.map((item) => item.media), 1);
-  const rankingMateriasTop = payload?.ranking_materias ?? [];
-  const leadingMateria = rankingMateriasTop[0];
   const hasCompositionData = totalAtual > 0;
-  const hasChartData = chartBars.length > 0;
   const hasSalaRanking = rankingSalas.length > 0;
-  const hasMateriaRanking = rankingMateriasTop.length > 0;
   const totalEquipes = totalVerdinhos + totalAmarelinhos + totalProfessores;
   const selectedRodada = rodadas.find((rodada) => String(rodada.id) === rodadaId);
   const scopeLabel = selectedRodada?.referencia ?? 'Todas as rodadas';
   const sessionLabel = sessaoSenib ? formatSessaoLabel(Number(sessaoSenib)) : 'Sessões juntas';
-  const rankingValueLabel = rodadaId && aulaRef ? 'Total da leitura' : 'Média por leitura';
+  const rankingValueLabel = rodadaId && aulaRef ? 'Presença na leitura' : 'Presença média';
 
   return (
     <section className="layout-grid">
@@ -368,50 +362,6 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
         </div>
 
         <div className="dashboard-analytics-grid">
-          <article className="dashboard-analytic-panel dashboard-analytic-panel-wide">
-            <header className="dashboard-panel-head">
-              <div>
-                <h3>Matérias por Presença</h3>
-                <p>Leitura atual destacando as matérias mais fortes no recorte selecionado</p>
-              </div>
-              <span className="dashboard-pill-value">{formatNumber(totalAtual)}</span>
-            </header>
-            {hasChartData ? (
-              <div className="dashboard-bar-chart-scroll">
-                <div
-                  className="dashboard-bar-chart"
-                  style={{ minWidth: `${Math.max(chartBars.length * 82, 100)}px` }}
-                >
-                  {chartBars.map((item) => (
-                    <div key={item.materia} className="dashboard-bar-group">
-                      <div className="dashboard-bar-stack">
-                        <strong
-                          className="dashboard-bar-value"
-                          style={{ bottom: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
-                        >
-                          {formatNumber(Math.round(item.media))}
-                        </strong>
-                        <div
-                          className="dashboard-bar-fill"
-                          style={{ height: `${clampPercent((item.media / maxBarValue) * 100)}%` }}
-                        />
-                      </div>
-                      <span title={item.materia}>{item.materia}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="dashboard-empty-state dashboard-empty-state-chart">
-                <strong>Nenhuma matéria consolidada ainda</strong>
-                <p>
-                  Importe ou ative uma rodada para visualizar as matérias com maior presença neste
-                  recorte.
-                </p>
-              </div>
-            )}
-          </article>
-
           <article className="dashboard-analytic-panel">
             <header className="dashboard-panel-head">
               <div>
@@ -533,62 +483,10 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
             )}
           </article>
 
-          <article className="dashboard-analytic-panel dashboard-analytic-panel-wide">
-            <header className="dashboard-panel-head">
-              <div>
-                <h3>Ranking de Matérias</h3>
-                <p>{scopeLabel}</p>
-              </div>
-              <span className="dashboard-chip">
-                {payload?.ultima_rodada
-                  ? sessionLabel
-                  : 'Sem sessao'}
-              </span>
-            </header>
-            {leadingMateria ? (
-              <div className="dashboard-ranking-highlight">
-                <span>Matéria em destaque</span>
-                <strong>{leadingMateria.materia}</strong>
-                <small>{formatNumber(leadingMateria.media)} de média por leitura</small>
-              </div>
-            ) : null}
-            {hasMateriaRanking ? (
-              <ul className="dashboard-ranking-list">
-                {rankingMateriasTop.map((item, index) => (
-                  <li key={item.materia}>
-                    <div className="dashboard-ranking-copy">
-                      <span className="dashboard-ranking-position">{index + 1}</span>
-                      <div>
-                        <strong>{item.materia}</strong>
-                        <small>Média por leitura da matéria</small>
-                      </div>
-                    </div>
-                    <div className="dashboard-ranking-track">
-                      <div
-                        className="dashboard-ranking-fill dashboard-ranking-fill-materia"
-                        style={{
-                          width: `${clampPercent(
-                            (item.media / maxBarValue) * 100,
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <strong className="dashboard-ranking-value">{formatNumber(item.media)}</strong>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="dashboard-empty-state dashboard-empty-state-ranking">
-                <strong>Nenhuma matéria consolidada</strong>
-                <p>O ranking de matérias aparece quando a rodada tiver leituras lançadas.</p>
-              </div>
-            )}
-          </article>
-
           <article className="dashboard-analytic-panel dashboard-room-ranking-panel">
             <header className="dashboard-panel-head">
               <div>
-                <h3>Ranking de Salas</h3>
+                <h3>Ranking de Salas e Programas</h3>
                 <p>{rankingValueLabel} · {scopeLabel}</p>
               </div>
               <span className="dashboard-chip">
@@ -609,8 +507,9 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                       <div className="dashboard-room-ranking-copy">
                         <strong>{item.sala}</strong>
                         <small>
+                          {item.materia ? `${item.materia} · ` : ''}
                           {rankingValueLabel}
-                          {item.total_leituras > 1 ? ` · ${item.total_leituras} leituras` : ''}
+                          {item.total_leituras > 1 ? ` · ${item.total_leituras} registros` : ''}
                           {!sessaoSenib ? ` · ${formatSessaoLabel(item.sessao_senib)}` : ''}
                         </small>
                       </div>
@@ -625,12 +524,21 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                       />
                     </div>
                     <div className="dashboard-room-ranking-breakdown">
-                      <span>Alunos <b>{formatNumber(Math.round(item.alunos))}</b></span>
-                      <span>Verdinhos <b>{formatNumber(Math.round(item.verdinhos))}</b></span>
-                      <span className="dashboard-room-chip-amber">
-                        Amarelinhos <b>{formatNumber(Math.round(item.amarelinhos))}</b>
-                      </span>
-                      <span>Prof. <b>{formatNumber(Math.round(item.professor))}</b></span>
+                      {item.tipo === 'programa' ? (
+                        <>
+                          <span>Participantes <b>{formatNumber(Math.round(item.participantes))}</b></span>
+                          <span>Professores <b>{formatNumber(Math.round(item.professores))}</b></span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Alunos <b>{formatNumber(Math.round(item.alunos))}</b></span>
+                          <span>Verdinhos <b>{formatNumber(Math.round(item.verdinhos))}</b></span>
+                          <span className="dashboard-room-chip-amber">
+                            Amarelinhos <b>{formatNumber(Math.round(item.amarelinhos))}</b>
+                          </span>
+                          <span>Prof. <b>{formatNumber(Math.round(item.professor))}</b></span>
+                        </>
+                      )}
                     </div>
                   </li>
                 ))}
