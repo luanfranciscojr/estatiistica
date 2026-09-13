@@ -5,7 +5,7 @@ import { CultoDashboardTab } from './culto-dashboard-tab';
 import { NovaTeensDashboardTab } from './nova-teens-dashboard-tab';
 import { ProgramaInfantilDashboardTab } from '../programas-infantis/programa-infantil-dashboard-tab';
 import { apiFetch } from '../../lib/api';
-import { formatDate, formatNumber, formatSessaoLabel } from '../../lib/format';
+import { formatNumber, formatSessaoLabel } from '../../lib/format';
 import type { DashboardPayload, OperationMode, RodadasPayload } from '../../types/contracts';
 
 const metricPalette = {
@@ -362,57 +362,70 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
         </div>
 
         <div className="dashboard-analytics-grid">
-          <article className="dashboard-analytic-panel">
+          <article className="dashboard-analytic-panel dashboard-room-ranking-panel">
             <header className="dashboard-panel-head">
               <div>
-                <h3>Histórico de Aulas</h3>
-                <p>
-                  {rodadaId
-                    ? 'Leitura histórica da rodada filtrada'
-                    : 'Evolução de frequência por rodada'}
-                </p>
+                <h3>Ranking de Salas e Programas</h3>
+                <p>{rankingValueLabel} · {scopeLabel}</p>
               </div>
-              <div className="dashboard-history-pills">
-                <span className="dashboard-chip">
-                  Média por rodada {formatNumber(Math.round(mediaRodada))}
-                </span>
-                <span className="dashboard-chip dashboard-chip-strong">
-                  Pico {formatNumber(Math.max(...seriesBase, 0))}
-                </span>
-              </div>
+              <span className="dashboard-chip">
+                {aulaRef ? formatAulaLabel(aulaRef) : sessionLabel}
+              </span>
             </header>
-            <div className="dashboard-history-summary">
-              <article>
-                <span>Última leitura</span>
-                <strong>{formatNumber(totalAtual)}</strong>
-              </article>
-              <article>
-                <span>Variação</span>
-                <strong>{formatNumber(Math.round(totalAtual - mediaRodada))}</strong>
-              </article>
-              <article>
-                <span>Percentual</span>
-                <strong>{formatDelta(deltaMedia)}</strong>
-              </article>
-            </div>
-            {historicoRecente.length > 1 ? (
-              <div className="dashboard-history-track">
-                {historicoRecente.map((item) => (
-                  <div key={`${item.rodada_id}-${item.data}`} className="dashboard-history-node">
-                    <div className="dashboard-history-dot" />
-                    <strong>{item.referencia}</strong>
-                    <span>{formatSessaoLabel(item.sessao_senib)}</span>
-                    <small>{formatDate(item.data)}</small>
-                  </div>
+            {hasSalaRanking ? (
+              <ol className="dashboard-room-ranking-list">
+                {rankingSalas.map((item, index) => (
+                  <li key={`${item.sessao_senib}-${item.sala}`}>
+                    <div className="dashboard-room-ranking-head">
+                      <span
+                        className={`dashboard-room-rank-position dashboard-room-rank-position-${Math.min(index + 1, 4)}`}
+                        aria-label={`${index + 1}º lugar`}
+                      >
+                        {index + 1}
+                      </span>
+                      <div className="dashboard-room-ranking-copy">
+                        <strong>{item.tipo === 'programa' ? item.sala : item.materia || item.sala}</strong>
+                        <small>
+                          {item.tipo === 'programa' ? `${item.materia} · ` : `${item.sala} · `}
+                          {rankingValueLabel}
+                          {item.total_leituras > 1 ? ` · ${item.total_leituras} registros` : ''}
+                          {!sessaoSenib ? ` · ${formatSessaoLabel(item.sessao_senib)}` : ''}
+                        </small>
+                      </div>
+                      <strong className="dashboard-room-ranking-total">
+                        {formatNumber(Math.round(item.media))}
+                      </strong>
+                    </div>
+                    <div className="dashboard-room-ranking-track" aria-hidden="true">
+                      <div
+                        className="dashboard-room-ranking-fill"
+                        style={{ width: `${clampPercent((item.media / maxSalaRankingValue) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="dashboard-room-ranking-breakdown">
+                      {item.tipo === 'programa' ? (
+                        <>
+                          <span>Participantes <b>{formatNumber(Math.round(item.participantes))}</b></span>
+                          <span>Professores <b>{formatNumber(Math.round(item.professores))}</b></span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Alunos <b>{formatNumber(Math.round(item.alunos))}</b></span>
+                          <span>Verdinhos <b>{formatNumber(Math.round(item.verdinhos))}</b></span>
+                          <span className="dashboard-room-chip-amber">
+                            Amarelinhos <b>{formatNumber(Math.round(item.amarelinhos))}</b>
+                          </span>
+                          <span>Prof. <b>{formatNumber(Math.round(item.professor))}</b></span>
+                        </>
+                      )}
+                    </div>
+                  </li>
                 ))}
-              </div>
+              </ol>
             ) : (
-              <div className="dashboard-history-empty">
-                <strong>Base histórica em formação</strong>
-                <p>
-                  Assim que novas rodadas forem importadas, a trilha de evolução aparece aqui com
-                  comparativos reais.
-                </p>
+              <div className="dashboard-empty-state dashboard-empty-state-ranking">
+                <strong>Nenhuma sala consolidada</strong>
+                <p>O ranking aparece quando existir uma rodada ativa com presença registrada.</p>
               </div>
             )}
           </article>
@@ -479,74 +492,6 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
                   Assim que a presença for lançada no painel, a composição por categoria aparece
                   aqui.
                 </p>
-              </div>
-            )}
-          </article>
-
-          <article className="dashboard-analytic-panel dashboard-room-ranking-panel">
-            <header className="dashboard-panel-head">
-              <div>
-                <h3>Ranking de Salas e Programas</h3>
-                <p>{rankingValueLabel} · {scopeLabel}</p>
-              </div>
-              <span className="dashboard-chip">
-                {aulaRef ? formatAulaLabel(aulaRef) : sessionLabel}
-              </span>
-            </header>
-            {hasSalaRanking ? (
-              <ol className="dashboard-room-ranking-list">
-                {rankingSalas.map((item, index) => (
-                  <li key={`${item.sessao_senib}-${item.sala}`}>
-                    <div className="dashboard-room-ranking-head">
-                      <span
-                        className={`dashboard-room-rank-position dashboard-room-rank-position-${Math.min(index + 1, 4)}`}
-                        aria-label={`${index + 1}º lugar`}
-                      >
-                        {index + 1}
-                      </span>
-                      <div className="dashboard-room-ranking-copy">
-                        <strong>{item.sala}</strong>
-                        <small>
-                          {item.materia ? `${item.materia} · ` : ''}
-                          {rankingValueLabel}
-                          {item.total_leituras > 1 ? ` · ${item.total_leituras} registros` : ''}
-                          {!sessaoSenib ? ` · ${formatSessaoLabel(item.sessao_senib)}` : ''}
-                        </small>
-                      </div>
-                      <strong className="dashboard-room-ranking-total">
-                        {formatNumber(Math.round(item.media))}
-                      </strong>
-                    </div>
-                    <div className="dashboard-room-ranking-track" aria-hidden="true">
-                      <div
-                        className="dashboard-room-ranking-fill"
-                        style={{ width: `${clampPercent((item.media / maxSalaRankingValue) * 100)}%` }}
-                      />
-                    </div>
-                    <div className="dashboard-room-ranking-breakdown">
-                      {item.tipo === 'programa' ? (
-                        <>
-                          <span>Participantes <b>{formatNumber(Math.round(item.participantes))}</b></span>
-                          <span>Professores <b>{formatNumber(Math.round(item.professores))}</b></span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Alunos <b>{formatNumber(Math.round(item.alunos))}</b></span>
-                          <span>Verdinhos <b>{formatNumber(Math.round(item.verdinhos))}</b></span>
-                          <span className="dashboard-room-chip-amber">
-                            Amarelinhos <b>{formatNumber(Math.round(item.amarelinhos))}</b>
-                          </span>
-                          <span>Prof. <b>{formatNumber(Math.round(item.professor))}</b></span>
-                        </>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <div className="dashboard-empty-state dashboard-empty-state-ranking">
-                <strong>Nenhuma sala consolidada</strong>
-                <p>O ranking aparece quando existir uma rodada ativa com presença registrada.</p>
               </div>
             )}
           </article>

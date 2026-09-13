@@ -861,8 +861,9 @@ textarea {
 }
 
 .counter-row > span {
+  flex: 1 1 auto;
   min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .counter-card .counter-row {
@@ -875,12 +876,13 @@ textarea {
 }
 
 .counter-card .counter-actions .mini-button {
-  min-width: 34px;
-  padding: 0 8px;
+  min-width: 32px;
+  padding: 0 6px;
 }
 
 .counter-card .counter-input {
-  width: 48px;
+  width: 58px;
+  flex: 0 0 58px;
 }
 
 .counter-head > div {

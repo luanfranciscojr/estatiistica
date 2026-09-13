@@ -171,35 +171,33 @@ export class DashboardService {
       }))
       .sort((a, b) => b.media - a.media);
 
-    const rankingProgramas = !rodadaId && !aulaRef
-      ? [
-          ['Um com Deus', umComDeus],
-          ['Nova Baby', novaBaby],
-        ].flatMap(([nome, rows]) => {
-          const typedRows = rows as ProgramaRankingRow[];
-          const filteredRows = sessaoSenib
-            ? typedRows.filter((item) => item.ordem === sessaoSenib)
-            : typedRows;
-          if (filteredRows.length === 0) return [];
-          const total = filteredRows.reduce((sum, item) => sum + item.total, 0);
-          const participantes = filteredRows.reduce((sum, item) => sum + item.participantes, 0);
-          const professores = filteredRows.reduce((sum, item) => sum + item.lideres, 0);
-          return [{
-            tipo: 'programa' as const,
-            sala: nome as string,
-            materia: 'Participantes',
-            sessao_senib: sessaoSenib ?? 0,
-            media: total / filteredRows.length,
-            alunos: 0,
-            verdinhos: 0,
-            amarelinhos: 0,
-            professor: 0,
-            participantes: participantes / filteredRows.length,
-            professores: professores / filteredRows.length,
-            total_leituras: filteredRows.length,
-          }];
-        })
-      : [];
+    const rankingProgramas = [
+      ['Um com Deus', umComDeus],
+      ['Nova Baby', novaBaby],
+    ].flatMap(([nome, rows]) => {
+      const typedRows = rows as ProgramaRankingRow[];
+      const filteredRows = sessaoSenib
+        ? typedRows.filter((item) => item.ordem === sessaoSenib)
+        : typedRows;
+      if (filteredRows.length === 0) return [];
+      const total = filteredRows.reduce((sum, item) => sum + item.total, 0);
+      const participantes = filteredRows.reduce((sum, item) => sum + item.participantes, 0);
+      const professores = filteredRows.reduce((sum, item) => sum + item.lideres, 0);
+      return [{
+        tipo: 'programa' as const,
+        sala: nome as string,
+        materia: 'Participantes',
+        sessao_senib: sessaoSenib ?? 0,
+        media: total / filteredRows.length,
+        alunos: 0,
+        verdinhos: 0,
+        amarelinhos: 0,
+        professor: 0,
+        participantes: participantes / filteredRows.length,
+        professores: professores / filteredRows.length,
+        total_leituras: filteredRows.length,
+      }];
+    });
 
     const rankingSalasEProgramas = [...rankingSalas, ...rankingProgramas]
       .sort((a, b) => b.media - a.media);
