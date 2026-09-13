@@ -32,8 +32,14 @@ export function ConfiguracaoTab({
   if (operation === 'nova_teens') {
     return <NovaTeensConfiguracaoTab user={user} />;
   }
-  if (operation === 'um_com_deus' || operation === 'nova_baby') {
-    return <ProgramaInfantilConfiguracaoTab programa={operation === 'um_com_deus' ? 'um-com-deus' : 'nova-baby'} label={operation === 'um_com_deus' ? 'Um com Deus' : 'Nova Baby'} user={user} />;
+  if (operation === 'um_com_deus' || operation === 'nova_baby' || operation === 'nova_infantil' || operation === 'nova_kids') {
+    const config = ({
+      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus' },
+      nova_baby: { programa: 'nova-baby', label: 'Nova Baby' },
+      nova_infantil: { programa: 'nova-infantil', label: 'Nova Infantil' },
+      nova_kids: { programa: 'nova-kids', label: 'Nova Kids' },
+    } as const)[operation];
+    return <ProgramaInfantilConfiguracaoTab {...config} user={user} />;
   }
 
   const [rodadas, setRodadas] = useState<RodadasPayload['items']>([]);

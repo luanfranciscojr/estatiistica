@@ -78,6 +78,10 @@ model User {
   umComDeusAtualizados UmComDeus[] @relation("UmComDeusUpdatedBy")
   novaBabyCriados NovaBaby[] @relation("NovaBabyCreatedBy")
   novaBabyAtualizados NovaBaby[] @relation("NovaBabyUpdatedBy")
+  novaInfantilCriados NovaInfantil[] @relation("NovaInfantilCreatedBy")
+  novaInfantilAtualizados NovaInfantil[] @relation("NovaInfantilUpdatedBy")
+  novaKidsCriados NovaKids[] @relation("NovaKidsCreatedBy")
+  novaKidsAtualizados NovaKids[] @relation("NovaKidsUpdatedBy")
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 }
@@ -279,6 +283,46 @@ model NovaBaby {
   updatedByUserId Int?
   createdByUser   User?       @relation("NovaBabyCreatedBy", fields: [createdByUserId], references: [id])
   updatedByUser   User?       @relation("NovaBabyUpdatedBy", fields: [updatedByUserId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([dataReferencia, ordem])
+  @@index([dataReferencia, status])
+}
+
+model NovaInfantil {
+  id              Int         @id @default(autoincrement())
+  dataReferencia  DateTime    @db.Date
+  ordem           Int
+  nome            String      @db.VarChar(80)
+  participantes   Int         @default(0)
+  lideres         Int         @default(0)
+  total           Int         @default(0)
+  status          CultoStatus @default(ativa)
+  createdByUserId Int?
+  updatedByUserId Int?
+  createdByUser   User?       @relation("NovaInfantilCreatedBy", fields: [createdByUserId], references: [id])
+  updatedByUser   User?       @relation("NovaInfantilUpdatedBy", fields: [updatedByUserId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([dataReferencia, ordem])
+  @@index([dataReferencia, status])
+}
+
+model NovaKids {
+  id              Int         @id @default(autoincrement())
+  dataReferencia  DateTime    @db.Date
+  ordem           Int
+  nome            String      @db.VarChar(80)
+  participantes   Int         @default(0)
+  lideres         Int         @default(0)
+  total           Int         @default(0)
+  status          CultoStatus @default(ativa)
+  createdByUserId Int?
+  updatedByUserId Int?
+  createdByUser   User?       @relation("NovaKidsCreatedBy", fields: [createdByUserId], references: [id])
+  updatedByUser   User?       @relation("NovaKidsUpdatedBy", fields: [updatedByUserId], references: [id])
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 

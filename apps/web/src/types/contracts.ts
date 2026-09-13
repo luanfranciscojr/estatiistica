@@ -1,5 +1,5 @@
 export const roleOptions = ['admin', 'estatistica', 'verdinho', 'pastor'] as const;
-export const operationOptions = ['senib', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby'] as const;
+export const operationOptions = ['senib', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] as const;
 
 export const categoryLabels = [
   ['alunos', 'Alunos'],

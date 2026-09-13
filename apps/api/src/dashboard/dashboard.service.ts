@@ -37,7 +37,7 @@ export class DashboardService {
           }
         : {}),
     };
-    const [rodadas, umComDeus, novaBaby] = await Promise.all([
+    const [rodadas, umComDeus, novaBaby, novaInfantil, novaKids] = await Promise.all([
       this.prisma.rodada.findMany({
       where,
       include: {
@@ -70,6 +70,12 @@ export class DashboardService {
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
         'SELECT ordem, participantes, lideres, total FROM NovaBaby ORDER BY dataReferencia DESC, ordem ASC',
+      ),
+      this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
+        'SELECT ordem, participantes, lideres, total FROM NovaInfantil ORDER BY dataReferencia DESC, ordem ASC',
+      ),
+      this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
+        'SELECT ordem, participantes, lideres, total FROM NovaKids ORDER BY dataReferencia DESC, ordem ASC',
       ),
     ]);
 
@@ -174,6 +180,8 @@ export class DashboardService {
     const rankingProgramas = [
       ['Um com Deus', umComDeus],
       ['Nova Baby', novaBaby],
+      ['Nova Infantil', novaInfantil],
+      ['Nova Kids', novaKids],
     ].flatMap(([nome, rows]) => {
       const typedRows = rows as ProgramaRankingRow[];
       const filteredRows = sessaoSenib

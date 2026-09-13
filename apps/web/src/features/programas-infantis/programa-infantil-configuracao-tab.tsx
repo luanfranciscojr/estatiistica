@@ -5,7 +5,7 @@ import { apiFetch } from '../../lib/api';
 import { formatDateOnly, formatNumber } from '../../lib/format';
 import type { ProgramaInfantilPainelPayload, SessionUser } from '../../types/contracts';
 
-export function ProgramaInfantilConfiguracaoTab({ programa, label, user }: { programa: 'um-com-deus' | 'nova-baby'; label: string; user: SessionUser }) {
+export function ProgramaInfantilConfiguracaoTab({ programa, label, user }: { programa: 'um-com-deus' | 'nova-baby' | 'nova-infantil' | 'nova-kids'; label: string; user: SessionUser }) {
   const [dataReferencia, setDataReferencia] = useState(new Date().toISOString().slice(0, 10));
   const [datas, setDatas] = useState<ProgramaInfantilPainelPayload['encontros'] extends never[] ? never[] : Array<{ data_referencia: string; total_geral: number; status: string }>>([]);
   const [selectedDate, setSelectedDate] = useState('');

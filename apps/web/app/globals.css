@@ -2143,6 +2143,235 @@ background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 24
   }
 }
 
+/* Operational panel: make the live counting surface easier to scan. */
+.hero-card {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(48, 122, 76, 0.24);
+  box-shadow: 0 20px 48px rgba(43, 76, 39, 0.1);
+}
+
+.hero-card::after {
+  position: absolute;
+  top: -80px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(121, 205, 104, 0.18), transparent 68%);
+  content: '';
+  pointer-events: none;
+}
+
+.panel-toolbar-row {
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
+  padding: 14px;
+  border: 1px solid rgba(86, 148, 78, 0.14);
+  border-radius: 18px;
+  background: rgba(247, 252, 244, 0.78);
+}
+
+.panel-toolbar-row .compact-field {
+  flex: 1 1 210px;
+  width: auto;
+}
+
+.session-strip {
+  position: relative;
+  z-index: 1;
+}
+
+.overview-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 142px;
+  box-shadow: 0 8px 20px rgba(43, 76, 39, 0.05);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.overview-card::after {
+  position: absolute;
+  right: 18px;
+  bottom: -34px;
+  width: 94px;
+  height: 94px;
+  border: 1px solid rgba(48, 122, 76, 0.12);
+  border-radius: 50%;
+  content: '';
+}
+
+.overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(43, 76, 39, 0.1);
+}
+
+.counter-card {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(43, 76, 39, 0.055);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.counter-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary), #8fcf78);
+  content: '';
+}
+
+.counter-card:nth-child(4n + 2)::before {
+  background: linear-gradient(90deg, #4e9d75, #9ad47f);
+}
+
+.counter-card:nth-child(4n + 3)::before {
+  background: linear-gradient(90deg, #c8a63a, #f0d36d);
+}
+
+.counter-card:nth-child(4n + 4)::before {
+  background: linear-gradient(90deg, #7d9e87, #b7cfac);
+}
+
+.counter-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(48, 122, 76, 0.3);
+  box-shadow: 0 16px 30px rgba(43, 76, 39, 0.11);
+}
+
+.counter-head {
+  align-items: flex-start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(86, 148, 78, 0.12);
+}
+
+.counter-head > div {
+  min-width: 0;
+}
+
+.counter-head strong {
+  display: block;
+  font-size: 1.06rem;
+  letter-spacing: -0.02em;
+}
+
+.counter-head span {
+  font-size: 0.82rem;
+}
+
+.counter-total {
+  min-width: 58px;
+  padding: 7px 9px;
+  border-radius: 12px;
+  background: rgba(231, 246, 226, 0.95);
+  color: var(--color-primary);
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.counter-body {
+  gap: 8px;
+}
+
+.counter-row {
+  min-height: 48px;
+  padding: 4px 0 4px 10px;
+  border-radius: 12px;
+  transition: background-color 160ms ease;
+}
+
+.counter-row:hover {
+  background: rgba(239, 248, 235, 0.8);
+}
+
+.counter-row > span {
+  color: #526557;
+  font-size: 0.93rem;
+  font-weight: 600;
+}
+
+.counter-actions {
+  gap: 5px;
+}
+
+.counter-card .counter-actions .mini-button,
+.counter-card .counter-input {
+  min-height: 40px;
+}
+
+.counter-card .counter-actions .mini-button {
+  border-color: rgba(48, 122, 76, 0.2);
+  background: #fbfdf9;
+  color: var(--color-primary-deep);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.counter-card .counter-actions .mini-button:hover {
+  border-color: rgba(48, 122, 76, 0.45);
+  background: #e9f6e5;
+  color: var(--color-primary);
+}
+
+.counter-card .counter-input {
+  border-color: rgba(48, 122, 76, 0.2);
+  background: #fff;
+  font-size: 1rem;
+}
+
+.materias-block {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(86, 148, 78, 0.2);
+}
+
+.parser-sidecard {
+  position: sticky;
+  top: 20px;
+  border-color: rgba(48, 122, 76, 0.25);
+  background:
+    linear-gradient(180deg, rgba(247, 252, 244, 0.98), rgba(255, 255, 255, 0.98));
+  box-shadow: 0 16px 32px rgba(43, 76, 39, 0.09);
+}
+
+.parser-sidecard textarea {
+  border-color: rgba(48, 122, 76, 0.22);
+  background: rgba(255, 255, 255, 0.9);
+  line-height: 1.45;
+}
+
+@media (max-width: 1280px) {
+  .parser-sidecard {
+    position: static;
+  }
+}
+
+@media (max-width: 520px) {
+  .panel-card {
+    padding: 18px;
+  }
+
+  .counter-card {
+    padding: 17px 14px;
+  }
+
+  .counter-row {
+    padding-left: 6px;
+  }
+
+  .counter-card .counter-actions .mini-button {
+    min-width: 30px;
+    padding: 0 5px;
+  }
+
+  .counter-card .counter-input {
+    width: 54px;
+    flex-basis: 54px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

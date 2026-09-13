@@ -87,8 +87,14 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   if (operation === 'nova_teens') {
     return <NovaTeensDashboardTab />;
   }
-  if (operation === 'um_com_deus' || operation === 'nova_baby') {
-    return <ProgramaInfantilDashboardTab programa={operation === 'um_com_deus' ? 'um-com-deus' : 'nova-baby'} label={operation === 'um_com_deus' ? 'Um com Deus' : 'Nova Baby'} />;
+  if (operation === 'um_com_deus' || operation === 'nova_baby' || operation === 'nova_infantil' || operation === 'nova_kids') {
+    const config = ({
+      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus', participantLabel: 'Participantes' },
+      nova_baby: { programa: 'nova-baby', label: 'Nova Baby', participantLabel: 'Participantes' },
+      nova_infantil: { programa: 'nova-infantil', label: 'Nova Infantil', participantLabel: 'Crianças' },
+      nova_kids: { programa: 'nova-kids', label: 'Nova Kids', participantLabel: 'Crianças' },
+    } as const)[operation];
+    return <ProgramaInfantilDashboardTab {...config} />;
   }
 
   const [payload, setPayload] = useState<DashboardPayload | null>(null);

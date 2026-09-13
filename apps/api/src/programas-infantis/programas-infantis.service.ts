@@ -3,7 +3,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProgramaDto } from './dto/update-programa.dto';
 
-export type ProgramaInfantil = 'um-com-deus' | 'nova-baby';
+export type ProgramaInfantil = 'um-com-deus' | 'nova-baby' | 'nova-infantil' | 'nova-kids';
 
 type ProgramaRow = {
   id: number;
@@ -24,9 +24,13 @@ export class ProgramasInfantisService {
   ) {}
 
   private config(programa: ProgramaInfantil) {
-    return programa === 'um-com-deus'
-      ? { table: 'UmComDeus', label: 'Um com Deus' }
-      : { table: 'NovaBaby', label: 'Nova Baby' };
+    const configs = {
+      'um-com-deus': { table: 'UmComDeus', label: 'Um com Deus' },
+      'nova-baby': { table: 'NovaBaby', label: 'Nova Baby' },
+      'nova-infantil': { table: 'NovaInfantil', label: 'Nova Infantil' },
+      'nova-kids': { table: 'NovaKids', label: 'Nova Kids' },
+    } satisfies Record<ProgramaInfantil, { table: string; label: string }>;
+    return configs[programa];
   }
 
   private nomeEncontro(programa: ProgramaInfantil, ordem: number) {

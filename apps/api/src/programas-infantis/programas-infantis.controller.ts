@@ -35,3 +35,5 @@ function controllerFor(programa: ProgramaInfantil) {
 
 export const UmComDeusController = controllerFor('um-com-deus');
 export const NovaBabyController = controllerFor('nova-baby');
+export const NovaInfantilController = controllerFor('nova-infantil');
+export const NovaKidsController = controllerFor('nova-kids');

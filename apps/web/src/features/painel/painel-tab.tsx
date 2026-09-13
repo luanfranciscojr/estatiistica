@@ -22,8 +22,14 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
   if (operation === 'nova_teens') {
     return <NovaTeensPainelTab user={user} />;
   }
-  if (operation === 'um_com_deus' || operation === 'nova_baby') {
-    return <ProgramaInfantilPainelTab programa={operation === 'um_com_deus' ? 'um-com-deus' : 'nova-baby'} label={operation === 'um_com_deus' ? 'Um com Deus' : 'Nova Baby'} user={user} />;
+  if (operation === 'um_com_deus' || operation === 'nova_baby' || operation === 'nova_infantil' || operation === 'nova_kids') {
+    const config = ({
+      um_com_deus: { programa: 'um-com-deus', label: 'Um com Deus', participantLabel: 'Participantes' },
+      nova_baby: { programa: 'nova-baby', label: 'Nova Baby', participantLabel: 'Participantes' },
+      nova_infantil: { programa: 'nova-infantil', label: 'Nova Infantil', participantLabel: 'Crianças' },
+      nova_kids: { programa: 'nova-kids', label: 'Nova Kids', participantLabel: 'Crianças' },
+    } as const)[operation];
+    return <ProgramaInfantilPainelTab {...config} user={user} />;
   }
 
   const [painel, setPainel] = useState<PainelPayload | null>(null);
