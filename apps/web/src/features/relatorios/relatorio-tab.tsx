@@ -36,6 +36,15 @@ function numberValue(value: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : 0;
 }
 
+function titleCase(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase('pt-BR')
+    .replace(/(^|[\s-])(\p{L})/gu, (_, separator, letter) =>
+      `${separator}${letter.toLocaleUpperCase('pt-BR')}`,
+    );
+}
+
 function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
   const lines = [
     '*NIB TABERNÁCULO*',
@@ -64,7 +73,7 @@ function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
 
     lines.push('', `*${period}*`, '', `*Senib ${session}*`, '');
     for (const sala of senib?.salas ?? []) {
-      lines.push(`${sala.materia} (${sala.local}): ${sala.total}`);
+      lines.push(`${titleCase(sala.materia)} (${sala.local}): ${sala.total}`);
     }
     lines.push(
       `*Total Senib ${session}: ${senib?.total ?? 0}*`,
