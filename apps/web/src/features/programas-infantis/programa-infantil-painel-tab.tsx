@@ -31,11 +31,14 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
   useEffect(() => { loadPainel(); }, [selectedDate, programa]);
 
   async function changeCount(id: number, field: 'participantes' | 'amarelinhos' | 'lideres', value: number) {
-    await apiFetch(`/${programa}/${id}`, {
+    const updated = await apiFetch<ProgramaInfantilPainelPayload>(`/${programa}/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ [field]: Math.max(value, 0) }),
     });
-    await loadPainel();
+    setPainel(updated);
+    if (updated.data_atual && updated.data_atual !== selectedDate) {
+      setSelectedDate(updated.data_atual);
+    }
   }
 
   return (
