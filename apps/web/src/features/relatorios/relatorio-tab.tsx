@@ -63,6 +63,8 @@ function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
     const culto = payload.cultos.find((item) => item.ordem === session)?.total ?? 0;
     const novaTeens =
       payload.nova_teens.find((item) => item.ordem === session)?.participantes ?? 0;
+    const umComDeus =
+      payload.um_com_deus.find((item) => item.ordem === session)?.participantes ?? 0;
     const novaBaby =
       payload.nova_baby.find((item) => item.ordem === session)?.participantes ?? 0;
     const novaInfantil =
@@ -78,6 +80,7 @@ function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
     lines.push(
       `*Total Senib ${session}: ${senib?.total ?? 0}*`,
       '',
+      `*Um com Deus:* ${umComDeus} participantes`,
       `*Nova Baby:* ${novaBaby} bebês`,
       `*Nova Infantil:* ${novaInfantil} crianças`,
       `*Nova Kids:* ${novaKids} crianças`,

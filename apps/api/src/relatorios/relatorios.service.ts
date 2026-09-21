@@ -11,6 +11,11 @@ type OrdemParticipantesRow = OrdemTotalRow & {
   participantes: number;
 };
 
+type OrdemUmComDeusRow = OrdemTotalRow & {
+  participantes: number;
+  amarelinhos: number;
+};
+
 type OrdemTeensRow = OrdemTotalRow & {
   teens: number;
 };
@@ -45,7 +50,7 @@ export class RelatoriosService {
   async getSemanal(dataReferencia: string) {
     const aulaRef = this.formatAulaRef(dataReferencia);
 
-    const [rodada, cultos, novaTeens, novaBaby, novaInfantil, novaKids] = await Promise.all([
+    const [rodada, cultos, novaTeens, umComDeus, novaBaby, novaInfantil, novaKids] = await Promise.all([
       this.prisma.rodada.findFirst({
         where: { contagens: { some: { aulaRef } } },
         orderBy: { updatedAt: 'desc' },
@@ -63,6 +68,10 @@ export class RelatoriosService {
       ),
       this.prisma.$queryRawUnsafe<OrdemTeensRow[]>(
         'SELECT ordem, teens, total FROM NovaTeens WHERE dataReferencia = ? ORDER BY ordem ASC',
+        dataReferencia,
+      ),
+      this.prisma.$queryRawUnsafe<OrdemUmComDeusRow[]>(
+        'SELECT ordem, participantes, amarelinhos, total FROM UmComDeus WHERE dataReferencia = ? ORDER BY ordem ASC',
         dataReferencia,
       ),
       this.prisma.$queryRawUnsafe<OrdemParticipantesRow[]>(
@@ -119,6 +128,9 @@ export class RelatoriosService {
       if (!novaTeens.some((item) => item.ordem === ordem)) {
         avisos.push(`Nova Teens ${ordem} não encontrado para a data selecionada.`);
       }
+      if (!umComDeus.some((item) => item.ordem === ordem)) {
+        avisos.push(`Um com Deus ${ordem} não encontrado para a data selecionada.`);
+      }
       if (!novaBaby.some((item) => item.ordem === ordem)) {
         avisos.push(`Nova Baby ${ordem} não encontrado para a data selecionada.`);
       }
@@ -144,6 +156,13 @@ export class RelatoriosService {
         ordem,
         participantes: novaTeens.find((item) => item.ordem === ordem)?.teens ?? 0,
       })),
+      um_com_deus: [1, 2].map((ordem) => {
+        const item = umComDeus.find((row) => row.ordem === ordem);
+        return {
+          ordem,
+          participantes: (item?.participantes ?? 0) + (item?.amarelinhos ?? 0),
+        };
+      }),
       nova_baby: [1, 2].map((ordem) => ({
         ordem,
         participantes: novaBaby.find((item) => item.ordem === ordem)?.participantes ?? 0,

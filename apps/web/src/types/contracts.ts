@@ -28,6 +28,7 @@ export type RelatorioSemanalPayload = {
   }>;
   cultos: Array<{ ordem: number; total: number }>;
   nova_teens: Array<{ ordem: number; participantes: number }>;
+  um_com_deus: Array<{ ordem: number; participantes: number }>;
   nova_baby: Array<{ ordem: number; participantes: number }>;
   nova_infantil: Array<{ ordem: number; participantes: number }>;
   nova_kids: Array<{ ordem: number; participantes: number }>;
