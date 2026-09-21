@@ -106,7 +106,7 @@ export class ProgramasInfantisService {
   async atualizar(programa: ProgramaInfantil, id: number, dto: UpdateProgramaDto, actorUserId: number) {
     const { table } = this.config(programa);
     const [atual] = await this.prisma.$queryRawUnsafe<ProgramaRow[]>(
-      `SELECT id, DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia, ordem, nome, participantes, lideres, total, status FROM ${table} WHERE id = ?`, id,
+      `SELECT id, DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia, ordem, nome, participantes, ${programa === 'um-com-deus' ? 'amarelinhos' : '0 AS amarelinhos'}, lideres, total, status FROM ${table} WHERE id = ?`, id,
     );
     if (!atual) throw new NotFoundException(`${this.config(programa).label} não encontrado.`);
     const participantes = dto.participantes ?? atual.participantes;
