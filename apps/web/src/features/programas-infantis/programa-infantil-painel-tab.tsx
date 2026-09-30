@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AttendanceCounter } from '../../components/attendance-counter';
+import { useCounterQueue } from '../../lib/use-counter-queue';
 import { apiFetch } from '../../lib/api';
 import { formatDateOnly, formatNumber } from '../../lib/format';
 import type { ProgramaInfantilPainelPayload, SessionUser } from '../../types/contracts';
@@ -12,7 +14,11 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
   const canManage = user.roles.some((role) => ['admin', 'estatistica'].includes(role));
   const equipeLabel = 'Professores';
 
+  const commit = useCounterQueue(selectedDate);
+  const requestVersion = useRef(0);
+
   async function loadPainel() {
+    const version = ++requestVersion.current;
     try {
       const params = new URLSearchParams();
       if (selectedDate) params.set('data_referencia', selectedDate);
@@ -20,6 +26,7 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
         params.size ? `/${programa}/painel?${params.toString()}` : `/${programa}/painel`,
         { headers: {} },
       );
+      if (version !== requestVersion.current) return;
       setPainel(payload);
       if (payload.data_atual && payload.data_atual !== selectedDate) setSelectedDate(payload.data_atual);
       setError(null);
@@ -29,17 +36,6 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
   }
 
   useEffect(() => { loadPainel(); }, [selectedDate, programa]);
-
-  async function changeCount(id: number, field: 'participantes' | 'amarelinhos' | 'lideres', value: number) {
-    const updated = await apiFetch<ProgramaInfantilPainelPayload>(`/${programa}/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ [field]: Math.max(value, 0) }),
-    });
-    setPainel(updated);
-    if (updated.data_atual && updated.data_atual !== selectedDate) {
-      setSelectedDate(updated.data_atual);
-    }
-  }
 
   return (
     <section className="layout-grid">
@@ -76,7 +72,13 @@ export function ProgramaInfantilPainelTab({ programa, label, participantLabel = 
               <div className="counter-head"><div><strong>{encontro.nome}</strong><span>{painel?.data_atual ? formatDateOnly(painel.data_atual) : 'Sem data'}</span></div><span className="counter-total">{formatNumber(encontro.total)}</span></div>
               <div className="counter-stack">
                 {([['participantes', participantLabel], ...(includeAmarelinhos ? [['amarelinhos', 'Amarelinhos'] as const] : []), ['lideres', equipeLabel]] as const).map(([field, fieldLabel]) => (
-                  <div key={field} className="counter-row"><span>{fieldLabel}</span><div className="counter-actions"><button type="button" className="mini-button" aria-label={`Diminuir ${fieldLabel}`} onClick={() => changeCount(encontro.id, field, encontro[field] - 1)}>-</button><input key={`${encontro.id}-${field}-${encontro[field]}`} className="counter-input" type="number" min="0" defaultValue={encontro[field]} aria-label={`${fieldLabel} em ${encontro.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={(event) => { const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== encontro[field]) void changeCount(encontro.id, field, value); else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(encontro[field]); }} /><button type="button" className="mini-button" aria-label={`Aumentar ${fieldLabel}`} onClick={() => changeCount(encontro.id, field, encontro[field] + 1)}>+</button></div></div>
+                  <div key={field} className="counter-row"><span>{fieldLabel}</span><AttendanceCounter key={`${selectedDate}:${encontro.id}:${field}`} value={encontro[field]} label={`${fieldLabel} em ${encontro.nome}`} onCommit={(action) => {
+                    requestVersion.current++;
+                    return commit<ProgramaInfantilPainelPayload>(`/${programa}/${encontro.id}`, field, action, (payload) => {
+                      setPainel(payload);
+                      return payload.encontros.find((item) => item.id === encontro.id)![field];
+                    });
+                  }} /></div>
                 ))}
               </div>
               <div className="culto-counter-body"><div className="culto-counter-value"><span>Total geral</span><strong>{formatNumber(encontro.total)}</strong></div></div>

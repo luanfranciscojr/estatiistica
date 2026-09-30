@@ -1,9 +1,11 @@
 'use client';
 
-import { useDeferredValue, useEffect, useState } from 'react';
+import { useDeferredValue, useEffect, useRef, useState } from 'react';
 import { CultoPainelTab } from './culto-painel-tab';
 import { NovaTeensPainelTab } from './nova-teens-painel-tab';
 import { ProgramaInfantilPainelTab } from '../programas-infantis/programa-infantil-painel-tab';
+import { AttendanceCounter } from '../../components/attendance-counter';
+import { useCounterQueue } from '../../lib/use-counter-queue';
 import { apiFetch } from '../../lib/api';
 import { formatNumber, formatSessaoLabel } from '../../lib/format';
 import {
@@ -48,7 +50,11 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
 
   const canManageRodadas = user.roles.some((role) => ['admin', 'estatistica'].includes(role));
 
+  const commit = useCounterQueue(`${selectedRodadaId}:${selectedSessao}:${selectedAulaRef}`);
+  const requestVersion = useRef(0);
+
   async function loadPainel() {
+    const version = ++requestVersion.current;
     try {
       const params = new URLSearchParams();
       if (selectedSessao) {
@@ -64,6 +70,7 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
         params.size > 0 ? `/painel/rodada-ativa?${params.toString()}` : '/painel/rodada-ativa',
         { headers: {} },
       );
+      if (version !== requestVersion.current) return;
       setPainel(payload);
       if (payload.rodada && !selectedRodadaId) {
         setSelectedRodadaId(String(payload.rodada.id));
@@ -353,45 +360,17 @@ export function PainelTab({ user, operation }: { user: SessionUser; operation: O
                     return (
                       <div key={key} className="counter-row">
                         <span>{label}</span>
-                        <div className="counter-actions">
-                          <button
-                            type="button"
-                            className="mini-button"
-                            aria-label={`Diminuir ${label} em ${sala.nome}`}
-                            onClick={async () => {
-                              if (!contagemId) return;
-                              await apiFetch(`/painel/contagens/${contagemId}`, {
-                                method: 'PATCH',
-                                body: JSON.stringify({
-                                  categoria: key,
-                                  operacao: 'decremento',
-                                }),
-                              });
-                              await loadPainel();
-                            }}
-                          >
-                            -
-                          </button>
-                          <input key={`${contagemId ?? sala.sala_id}-${key}-${sala.contagens[key] ?? 0}`} className="counter-input" type="number" min="0" defaultValue={sala.contagens[key] ?? 0} aria-label={`${label} em ${sala.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={async (event) => { if (!contagemId) return; const value = Number(event.currentTarget.value); const current = sala.contagens[key] ?? 0; if (Number.isInteger(value) && value >= 0 && value !== current) { await apiFetch(`/painel/contagens/${contagemId}`, { method: 'PATCH', body: JSON.stringify({ categoria: key, operacao: 'ajuste', valor: value }) }); await loadPainel(); } else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(current); }} />
-                          <button
-                            type="button"
-                            className="mini-button"
-                            aria-label={`Aumentar ${label} em ${sala.nome}`}
-                            onClick={async () => {
-                              if (!contagemId) return;
-                              await apiFetch(`/painel/contagens/${contagemId}`, {
-                                method: 'PATCH',
-                                body: JSON.stringify({
-                                  categoria: key,
-                                  operacao: 'incremento',
-                                }),
-                              });
-                              await loadPainel();
-                            }}
-                          >
-                            +
-                          </button>
-                        </div>
+                        <AttendanceCounter key={`${contagemId ?? sala.sala_id}:${selectedAulaRef}:${key}`} value={sala.contagens[key] ?? 0} label={`${label} em ${sala.nome}`} disabled={!contagemId} onCommit={(action) => {
+                          requestVersion.current++;
+                          return commit<{ contagem: { id: number; alunos: number; verdinhos: number; amarelinhos: number; professor: number; total: number } }>(`/painel/contagens/${contagemId}`, key, action, (payload) => {
+                            setPainel((current) => {
+                              if (!current) return current;
+                              const salas = current.salas.map((item) => item.contagem_id === payload.contagem.id ? { ...item, contagens: { ...item.contagens, ...payload.contagem }, total: payload.contagem.total } : item);
+                              return { ...current, salas, total_geral: salas.reduce((sum, item) => sum + item.total, 0) };
+                            });
+                            return payload.contagem[key];
+                          });
+                        }} />
                       </div>
                     );
                   })}

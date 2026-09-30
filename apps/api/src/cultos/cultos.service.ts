@@ -1,3 +1,5 @@
+import { updateCounter } from '../common/update-counter';
+import { UpdateCultoDto } from './dto/update-culto.dto';
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -142,53 +144,9 @@ export class CultosService {
     };
   }
 
-  async atualizarTotal(id: number, total: number, actorUserId: number) {
-    if (total < 0) {
-      throw new UnprocessableEntityException('O total do culto não pode ser negativo.');
-    }
-
-    const [culto] = await this.prisma.$queryRawUnsafe<CultoRow[]>(
-      `
-        SELECT
-          id,
-          DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia,
-          ordem,
-          nome,
-          total,
-          status
-        FROM Culto
-        WHERE id = ?
-      `,
-      id,
-    );
-    if (!culto) {
-      throw new NotFoundException('Culto não encontrado.');
-    }
-
-    await this.prisma.$executeRawUnsafe(
-      `
-        UPDATE Culto
-        SET total = ?, updatedByUserId = ?, updatedAt = NOW(3)
-        WHERE id = ?
-      `,
-      total,
-      actorUserId,
-      id,
-    );
-
-    await this.auditoriaService.registrar({
-      actorUserId,
-      acao: 'culto.update',
-      entidade: 'culto',
-      entidadeId: String(id),
-      payload: {
-        data_referencia: culto.data_referencia,
-        ordem: culto.ordem,
-        total,
-      },
-    });
-
-    return this.getPainel(culto.data_referencia);
+  async atualizarTotal(id: number, dto: UpdateCultoDto, actorUserId: number) {
+    const updated = await updateCounter(this.prisma, 'Culto', id, dto, actorUserId);
+    return this.getPainel(updated.data_referencia);
   }
 
   async getDashboard(dataReferencia?: string) {

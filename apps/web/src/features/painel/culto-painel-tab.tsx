@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AttendanceCounter } from '../../components/attendance-counter';
+import { useCounterQueue } from '../../lib/use-counter-queue';
 import { apiFetch } from '../../lib/api';
 import { formatDateOnly, formatNumber } from '../../lib/format';
 import type { CultoPainelPayload, SessionUser } from '../../types/contracts';
@@ -12,7 +14,11 @@ export function CultoPainelTab({ user }: { user: SessionUser }) {
 
   const canManageCulto = user.roles.some((role) => ['admin', 'estatistica'].includes(role));
 
+  const commit = useCounterQueue(selectedDate);
+  const requestVersion = useRef(0);
+
   async function loadPainel() {
+    const version = ++requestVersion.current;
     try {
       const params = new URLSearchParams();
       if (selectedDate) {
@@ -22,6 +28,7 @@ export function CultoPainelTab({ user }: { user: SessionUser }) {
         params.size ? `/cultos/painel?${params.toString()}` : '/cultos/painel',
         { headers: {} },
       );
+      if (version !== requestVersion.current) return;
       setPainel(payload);
       if (payload.data_atual && payload.data_atual !== selectedDate) {
         setSelectedDate(payload.data_atual);
@@ -112,38 +119,13 @@ export function CultoPainelTab({ user }: { user: SessionUser }) {
               <div className="culto-counter-body">
                 <div className="culto-counter-value">
                   <span>Total geral</span>
-                  <input className="counter-input" type="number" min="0" defaultValue={culto.total} aria-label={`Total do ${culto.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={async (event) => { const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== culto.total) { await apiFetch(`/cultos/${culto.id}`, { method: 'PATCH', body: JSON.stringify({ total: value }) }); await loadPainel(); } else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(culto.total); }} />
-                </div>
-                <div className="culto-counter-actions">
-                  <button
-                    type="button"
-                    className="mini-button"
-                    aria-label={`Diminuir total do ${culto.nome}`}
-                    onClick={async () => {
-                      const nextTotal = Math.max(culto.total - 1, 0);
-                      await apiFetch(`/cultos/${culto.id}`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({ total: nextTotal }),
-                      });
-                      await loadPainel();
-                    }}
-                  >
-                    -
-                  </button>
-                  <button
-                    type="button"
-                    className="mini-button"
-                    aria-label={`Aumentar total do ${culto.nome}`}
-                    onClick={async () => {
-                      await apiFetch(`/cultos/${culto.id}`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({ total: culto.total + 1 }),
-                      });
-                      await loadPainel();
-                    }}
-                  >
-                    +
-                  </button>
+                  <AttendanceCounter key={`${selectedDate}:${culto.id}`} value={culto.total} label={`Total do ${culto.nome}`} onCommit={(action) => {
+                    requestVersion.current++;
+                    return commit<CultoPainelPayload>(`/cultos/${culto.id}`, 'total', action, (payload) => {
+                      setPainel(payload);
+                      return payload.cultos.find((item) => item.id === culto.id)!.total;
+                    });
+                  }} />
                 </div>
               </div>
             </section>

@@ -1,3 +1,4 @@
+import { updateCounter } from '../common/update-counter';
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -143,62 +144,8 @@ export class NovaTeensService {
   }
 
   async atualizar(id: number, dto: UpdateNovaTeensDto, actorUserId: number) {
-    const [current] = await this.prisma.$queryRawUnsafe<NovaTeensRow[]>(
-      `
-        SELECT
-          id,
-          DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia,
-          ordem,
-          nome,
-          teens,
-          lideres,
-          total,
-          status
-        FROM NovaTeens
-        WHERE id = ?
-      `,
-      id,
-    );
-
-    if (!current) {
-      throw new NotFoundException('Nova Teens não encontrado.');
-    }
-
-    const teens = dto.teens ?? current.teens;
-    const lideres = dto.lideres ?? current.lideres;
-    if (teens < 0 || lideres < 0) {
-      throw new UnprocessableEntityException('As contagens de Nova Teens não podem ser negativas.');
-    }
-
-    const total = teens + lideres;
-    await this.prisma.$executeRawUnsafe(
-      `
-        UPDATE NovaTeens
-        SET teens = ?, lideres = ?, total = ?, updatedByUserId = ?, updatedAt = NOW(3)
-        WHERE id = ?
-      `,
-      teens,
-      lideres,
-      total,
-      actorUserId,
-      id,
-    );
-
-    await this.auditoriaService.registrar({
-      actorUserId,
-      acao: 'nova_teens.update',
-      entidade: 'nova_teens',
-      entidadeId: String(id),
-      payload: {
-        data_referencia: current.data_referencia,
-        ordem: current.ordem,
-        teens,
-        lideres,
-        total,
-      },
-    });
-
-    return this.getPainel(current.data_referencia);
+    const updated = await updateCounter(this.prisma, 'NovaTeens', id, dto, actorUserId);
+    return this.getPainel(updated.data_referencia);
   }
 
   async getDashboard(dataReferencia?: string) {

@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AttendanceCounter } from '../../components/attendance-counter';
+import { useCounterQueue } from '../../lib/use-counter-queue';
 import { apiFetch } from '../../lib/api';
 import { formatDateOnly, formatNumber } from '../../lib/format';
 import type { NovaTeensPainelPayload, SessionUser } from '../../types/contracts';
@@ -12,7 +14,11 @@ export function NovaTeensPainelTab({ user }: { user: SessionUser }) {
 
   const canManage = user.roles.some((role) => ['admin', 'estatistica'].includes(role));
 
+  const commit = useCounterQueue(selectedDate);
+  const requestVersion = useRef(0);
+
   async function loadPainel() {
+    const version = ++requestVersion.current;
     try {
       const params = new URLSearchParams();
       if (selectedDate) {
@@ -22,6 +28,7 @@ export function NovaTeensPainelTab({ user }: { user: SessionUser }) {
         params.size ? `/nova-teens/painel?${params.toString()}` : '/nova-teens/painel',
         { headers: {} },
       );
+      if (version !== requestVersion.current) return;
       setPainel(payload);
       if (payload.data_atual && payload.data_atual !== selectedDate) {
         setSelectedDate(payload.data_atual);
@@ -114,40 +121,13 @@ export function NovaTeensPainelTab({ user }: { user: SessionUser }) {
                 ].map(([key, label]) => (
                   <div key={key} className="counter-row">
                     <span>{label}</span>
-                    <div className="counter-actions">
-                      <button
-                        type="button"
-                        className="mini-button"
-                        aria-label={`Diminuir ${label} em ${encontro.nome}`}
-                        onClick={async () => {
-                          const field = key as 'teens' | 'lideres';
-                          const nextValue = Math.max(encontro[field] - 1, 0);
-                          await apiFetch(`/nova-teens/${encontro.id}`, {
-                            method: 'PATCH',
-                            body: JSON.stringify({ [field]: nextValue }),
-                          });
-                          await loadPainel();
-                        }}
-                      >
-                        -
-                      </button>
-                      <input className="counter-input" type="number" min="0" defaultValue={encontro[key as 'teens' | 'lideres']} aria-label={`${label} em ${encontro.nome}`} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} onBlur={async (event) => { const field = key as 'teens' | 'lideres'; const value = Number(event.currentTarget.value); if (Number.isInteger(value) && value >= 0 && value !== encontro[field]) { await apiFetch(`/nova-teens/${encontro.id}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) }); await loadPainel(); } else if (!Number.isInteger(value) || value < 0) event.currentTarget.value = String(encontro[field]); }} />
-                      <button
-                        type="button"
-                        className="mini-button"
-                        aria-label={`Aumentar ${label} em ${encontro.nome}`}
-                        onClick={async () => {
-                          const field = key as 'teens' | 'lideres';
-                          await apiFetch(`/nova-teens/${encontro.id}`, {
-                            method: 'PATCH',
-                            body: JSON.stringify({ [field]: encontro[field] + 1 }),
-                          });
-                          await loadPainel();
-                        }}
-                      >
-                        +
-                      </button>
-                    </div>
+                    <AttendanceCounter key={`${selectedDate}:${encontro.id}:${key}`} value={encontro[key as 'teens' | 'lideres']} label={`${label} em ${encontro.nome}`} onCommit={(action) => {
+                      requestVersion.current++;
+                      return commit<NovaTeensPainelPayload>(`/nova-teens/${encontro.id}`, key, action, (payload) => {
+                        setPainel(payload);
+                        return payload.encontros.find((item) => item.id === encontro.id)![key as 'teens' | 'lideres'];
+                      });
+                    }} />
                   </div>
                 ))}
               </div>

@@ -1,6 +1,8 @@
 import { IsInt, IsOptional, Min } from 'class-validator';
 
-export class UpdateNovaTeensDto {
+import { CounterActionDto } from '../../common/counter-action.dto';
+
+export class UpdateNovaTeensDto extends CounterActionDto {
   @IsOptional()
   @IsInt()
   @Min(0)

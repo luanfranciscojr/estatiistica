@@ -53,6 +53,6 @@ export class CultosController {
     @Body() body: UpdateCultoDto,
     @CurrentUser() user: { id: number },
   ) {
-    return this.cultosService.atualizarTotal(id, body.total, user.id);
+    return this.cultosService.atualizarTotal(id, body, user.id);
   }
 }

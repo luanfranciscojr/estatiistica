@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { updateCounter, type CounterTable } from '../common/update-counter';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProgramaDto } from './dto/update-programa.dto';
 
@@ -105,31 +106,8 @@ export class ProgramasInfantisService {
 
   async atualizar(programa: ProgramaInfantil, id: number, dto: UpdateProgramaDto, actorUserId: number) {
     const { table } = this.config(programa);
-    const [atual] = await this.prisma.$queryRawUnsafe<ProgramaRow[]>(
-      `SELECT id, DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia, ordem, nome, participantes, ${programa === 'um-com-deus' ? 'amarelinhos' : '0 AS amarelinhos'}, lideres, total, status FROM ${table} WHERE id = ?`, id,
-    );
-    if (!atual) throw new NotFoundException(`${this.config(programa).label} não encontrado.`);
-    const participantes = dto.participantes ?? atual.participantes;
-    const amarelinhos = programa === 'um-com-deus' ? dto.amarelinhos ?? atual.amarelinhos : 0;
-    const lideres = dto.lideres ?? atual.lideres;
-    if (participantes < 0 || amarelinhos < 0 || lideres < 0) {
-      throw new UnprocessableEntityException('As contagens não podem ser negativas.');
-    }
-    const total = participantes + amarelinhos + lideres;
-    await this.prisma.$executeRawUnsafe(
-      `UPDATE ${table} SET participantes = ?, ${programa === 'um-com-deus' ? 'amarelinhos = ?, ' : ''}lideres = ?, total = ?, updatedByUserId = ?, updatedAt = NOW(3) WHERE id = ?`,
-      ...(programa === 'um-com-deus'
-        ? [participantes, amarelinhos, lideres, total, actorUserId, id]
-        : [participantes, lideres, total, actorUserId, id]),
-    );
-    await this.auditoriaService.registrar({
-      actorUserId,
-      acao: `${programa}.update`,
-      entidade: programa,
-      entidadeId: String(id),
-      payload: { data_referencia: atual.data_referencia, ordem: atual.ordem, participantes, amarelinhos, lideres, total },
-    });
-    return this.getPainel(programa, atual.data_referencia);
+    const updated = await updateCounter(this.prisma, table as CounterTable, id, dto, actorUserId);
+    return this.getPainel(programa, updated.data_referencia);
   }
 
   async getDashboard(programa: ProgramaInfantil, dataReferencia?: string) {

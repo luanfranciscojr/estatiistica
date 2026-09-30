@@ -6,6 +6,7 @@ import {
 import { CategoriaContagem, OperacaoContagem, Prisma } from '@prisma/client';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { expandMateriaAliases } from '../common/materia-aliases';
+import { updateCounter } from '../common/update-counter';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateContagemDto } from './dto/update-contagem.dto';
 
@@ -260,80 +261,11 @@ export class PainelService {
   }
 
   async updateContagem(id: number, dto: UpdateContagemDto, actorUserId: number) {
-    const contagem = await this.prisma.contagem.findUnique({ where: { id } });
-    if (!contagem) {
-      throw new NotFoundException('Contagem nao encontrada.');
-    }
-
-    const currentValue = contagem[dto.categoria];
-    const nextValue =
-      dto.operacao === 'ajuste'
-        ? dto.valor ?? currentValue
-        : dto.operacao === 'incremento'
-        ? currentValue + 1
-        : dto.operacao === 'decremento'
-          ? currentValue - 1
-          : currentValue;
-
-    if (nextValue < 0) {
-      throw new UnprocessableEntityException('A operacao resultaria em contagem negativa.');
-    }
-
-    const nextState = {
-      alunos: contagem.alunos,
-      verdinhos: contagem.verdinhos,
-      amarelinhos: contagem.amarelinhos,
-      professor: contagem.professor,
-    };
-    nextState[dto.categoria] = nextValue;
-    const total =
-      nextState.alunos +
-      nextState.verdinhos +
-      nextState.amarelinhos +
-      nextState.professor;
-
-    const updated = await this.prisma.contagem.update({
-      where: { id },
-      data: {
-        ...nextState,
-        total,
-        updatedByUserId: actorUserId,
-        eventos: {
-          create: {
-            categoria: dto.categoria as CategoriaContagem,
-            operacao: dto.operacao as OperacaoContagem,
-            valorAnterior: currentValue,
-            valorAtual: nextValue,
-            userId: actorUserId,
-          },
-        },
-      },
-    });
-
+    const updated = await updateCounter(this.prisma, 'Contagem', id, dto, actorUserId);
     const totalGeral = await this.prisma.contagem.aggregate({
-      where: { rodadaId: contagem.rodadaId, aulaRef: contagem.aulaRef },
-      _sum: { total: true },
+      where: { rodadaId: updated.rodadaId, aulaRef: updated.aulaRef }, _sum: { total: true },
     });
-
-    await this.auditoriaService.registrar({
-      actorUserId,
-      acao: 'contagem.update',
-      entidade: 'contagem',
-      entidadeId: String(id),
-      payload: dto,
-    });
-
-    return {
-      contagem: {
-        id: updated.id,
-        alunos: updated.alunos,
-        verdinhos: updated.verdinhos,
-        amarelinhos: updated.amarelinhos,
-        professor: updated.professor,
-        total: updated.total,
-      },
-      total_geral: totalGeral._sum.total ?? 0,
-    };
+    return { contagem: { id, alunos: updated.alunos, verdinhos: updated.verdinhos, amarelinhos: updated.amarelinhos, professor: updated.professor, total: updated.total }, total_geral: totalGeral._sum.total ?? 0 };
   }
 
   async aplicarContagensConfirmadas(

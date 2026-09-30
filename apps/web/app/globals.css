@@ -2617,3 +2617,9 @@ background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 24
 .manual-aulas-list { padding: 0; margin: 0; list-style: none; display: grid; gap: 8px; }
 .manual-aulas-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .manual-aulas button:disabled, .manual-aulas-editor button:disabled { opacity: 0.5; cursor: not-allowed; }
+.attendance-counter { min-width: 0; }
+.attendance-counter > small { display: block; min-height: 1.25em; margin-top: 4px; color: var(--color-soft); font-size: 11px; }
+.attendance-counter .counter-input:disabled { opacity: 1; color: var(--color-text); }
+.attendance-counter button:disabled { opacity: 0.45; cursor: not-allowed; }
+.counter-save-error { color: var(--color-error); font-size: 12px; overflow-wrap: anywhere; }
+.counter-save-error button { margin-top: 8px; }
