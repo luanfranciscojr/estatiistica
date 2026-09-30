@@ -1,4 +1,11 @@
-export const roleOptions = ['admin', 'estatistica', 'verdinho', 'pastor'] as const;
+export const roleOptions = ['admin', 'estatistica', 'verdinho', 'pastor', 'estatistica_culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] as const;
+export const roleLabels: Record<string, string> = {
+  admin: 'Administrador · acesso completo', estatistica: 'Estatística · todos os módulos',
+  verdinho: 'Verdinho · lançamento em todos os módulos', pastor: 'Pastor · consulta geral',
+  estatistica_culto: 'Culto de domingo · consulta e lançamento', nova_teens: 'Nova Teens · consulta e lançamento',
+  um_com_deus: 'Um com Deus · consulta e lançamento', nova_baby: 'Nova Baby · consulta e lançamento',
+  nova_infantil: 'Nova Infantil · consulta e lançamento', nova_kids: 'Nova Kids · consulta e lançamento',
+};
 export const operationOptions = ['senib', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] as const;
 
 export const categoryLabels = [
@@ -8,7 +15,7 @@ export const categoryLabels = [
   ['professor', 'Professor'],
 ] as const;
 
-export type AppTab = 'painel' | 'configuracao' | 'dashboard' | 'relatorio' | 'usuarios';
+export type AppTab = 'painel' | 'configuracao' | 'dashboard' | 'relatorio' | 'usuarios' | 'domingo';
 export type OperationMode = (typeof operationOptions)[number];
 
 export type RelatorioSemanalPayload = {

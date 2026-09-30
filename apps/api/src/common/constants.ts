@@ -1,6 +1,6 @@
 export const SESSION_COOKIE_NAME = 'estatisticas_sid';
 
-export const ROLE_CODES = ['admin', 'estatistica', 'verdinho', 'pastor'] as const;
+export const ROLE_CODES = ['admin', 'estatistica', 'verdinho', 'pastor', 'estatistica_culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] as const;
 
 export type RoleCodeValue = (typeof ROLE_CODES)[number];
 

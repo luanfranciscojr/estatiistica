@@ -139,10 +139,15 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
       signal: controller.signal,
     })
       .then((response) => {
-        setPayload(response);
-        if (aulaRef && !response.aulas_disponiveis.includes(aulaRef)) {
-          setAulaRef('');
+        if (controller.signal.aborted) return;
+        if (!aulaRef || !response.aulas_disponiveis.includes(aulaRef)) {
+          const latest = response.aulas_disponiveis[0] ?? '';
+          if (latest !== aulaRef) {
+            setAulaRef(latest);
+            return;
+          }
         }
+        setPayload(response);
       })
       .catch((requestError) => {
         if (requestError instanceof Error && requestError.name === 'AbortError') {
@@ -243,7 +248,9 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
   const selectedRodada = rodadas.find((rodada) => String(rodada.id) === rodadaId);
   const scopeLabel = selectedRodada?.referencia ?? 'Todas as rodadas';
   const sessionLabel = sessaoSenib ? formatSessaoLabel(Number(sessaoSenib)) : 'Sessões juntas';
-  const rankingValueLabel = rodadaId && aulaRef ? 'Presença na leitura' : 'Presença média';
+  const rankingValueLabel = aulaRef && aulaRef !== 'consolidado' ? 'Presença na data' : 'Presença média';
+
+  if (loading || (!payload && !error)) return <p role="status">Carregando a data selecionada…</p>;
 
   return (
     <section className="layout-grid">
@@ -276,7 +283,7 @@ export function DashboardTab({ operation }: { operation: OperationMode }) {
             <label className="dashboard-select-field">
               <span>Data da aula</span>
               <select value={aulaRef} onChange={(event) => setAulaRef(event.target.value)}>
-                <option value="">Todas</option>
+                {!payload?.aulas_disponiveis.length && <option value="">Sem datas disponíveis</option>}
                 {(payload?.aulas_disponiveis ?? []).map((item) => (
                   <option key={item} value={item}>
                     {formatAulaLabel(item)}

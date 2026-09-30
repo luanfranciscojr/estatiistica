@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 type ProgramaRankingRow = {
+  data_referencia: string;
   ordem: number;
   participantes: number;
   amarelinhos: number;
@@ -67,16 +68,16 @@ export class DashboardService {
       orderBy: { createdAt: 'desc' },
       }),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, amarelinhos, lideres, total FROM UmComDeus ORDER BY dataReferencia DESC, ordem ASC',
+        "SELECT DATE_FORMAT(dataReferencia, '%d/%m/%Y') AS data_referencia, ordem, participantes, amarelinhos, lideres, total FROM UmComDeus ORDER BY dataReferencia DESC, ordem ASC",
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaBaby ORDER BY dataReferencia DESC, ordem ASC',
+        "SELECT DATE_FORMAT(dataReferencia, '%d/%m/%Y') AS data_referencia, ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaBaby ORDER BY dataReferencia DESC, ordem ASC",
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaInfantil ORDER BY dataReferencia DESC, ordem ASC',
+        "SELECT DATE_FORMAT(dataReferencia, '%d/%m/%Y') AS data_referencia, ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaInfantil ORDER BY dataReferencia DESC, ordem ASC",
       ),
       this.prisma.$queryRawUnsafe<ProgramaRankingRow[]>(
-        'SELECT ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaKids ORDER BY dataReferencia DESC, ordem ASC',
+        "SELECT DATE_FORMAT(dataReferencia, '%d/%m/%Y') AS data_referencia, ordem, participantes, 0 AS amarelinhos, lideres, total FROM NovaKids ORDER BY dataReferencia DESC, ordem ASC",
       ),
     ]);
 
@@ -185,9 +186,9 @@ export class DashboardService {
       ['Nova Kids', novaKids],
     ].flatMap(([nome, rows]) => {
       const typedRows = rows as ProgramaRankingRow[];
-      const filteredRows = sessaoSenib
-        ? typedRows.filter((item) => item.ordem === sessaoSenib)
-        : typedRows;
+      const filteredRows = typedRows.filter((item) =>
+        (!sessaoSenib || item.ordem === sessaoSenib) && (!aulaRef || aulaRef === 'consolidado' || item.data_referencia === aulaRef),
+      );
       if (filteredRows.length === 0) return [];
       const total = filteredRows.reduce((sum, item) => sum + item.total, 0);
       const participantes = filteredRows.reduce((sum, item) => sum + item.participantes, 0);

@@ -1,5 +1,5 @@
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
-import { RoleCodeValue } from '../../common/constants';
+import { ArrayNotEmpty, ArrayUnique, IsIn, IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { ROLE_CODES, RoleCodeValue } from '../../common/constants';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -12,5 +12,8 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayNotEmpty()
+  @ArrayUnique()
+  @IsIn(ROLE_CODES, { each: true })
   roles?: RoleCodeValue[];
 }

@@ -82,6 +82,7 @@ export class UsersService {
     const roles = await this.prisma.role.findMany({
       where: { code: { in: dto.roles } },
     });
+    if (roles.length !== dto.roles.length) throw new BadRequestException('Perfil indisponível. Verifique as migrações do sistema.');
 
     const user = await this.prisma.user.create({
       data: {
@@ -138,14 +139,17 @@ export class UsersService {
       const roles = await this.prisma.role.findMany({
         where: { code: { in: dto.roles } },
       });
+      if (roles.length !== dto.roles.length) throw new BadRequestException('Perfil indisponível. Verifique as migrações do sistema.');
 
-      await this.prisma.userRole.deleteMany({ where: { userId: id } });
-      await this.prisma.userRole.createMany({
-        data: roles.map((role) => ({
-          userId: id,
-          roleId: role.id,
-        })),
-      });
+      await this.prisma.$transaction([
+        this.prisma.userRole.deleteMany({ where: { userId: id } }),
+        this.prisma.userRole.createMany({
+          data: roles.map((role) => ({
+            userId: id,
+            roleId: role.id,
+          })),
+        }),
+      ]);
     }
 
     const updated = await this.prisma.user.update({

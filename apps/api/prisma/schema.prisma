@@ -12,6 +12,12 @@ enum RoleCode {
   estatistica
   verdinho
   pastor
+  estatistica_culto
+  nova_teens
+  um_com_deus
+  nova_baby
+  nova_infantil
+  nova_kids
 }
 
 enum RodadaOrigem {

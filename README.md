@@ -75,6 +75,14 @@ Toda implementacao de UI futura neste projeto deve seguir obrigatoriamente estes
 - Migration SQL inicial: [apps/api/prisma/migrations/20260611092000_init/migration.sql](/Users/luanfernandes/nib/nova-web/estatistica/apps/api/prisma/migrations/20260611092000_init/migration.sql)
 - O arquivo foi gerado a partir do schema Prisma para MySQL e reduz o bloqueio de inicializacao do banco local.
 
+## Preparar domingo e perfis por modulo
+
+Administradores e usuarios de estatistica geral podem usar **Preparar domingo** para escolher uma data de domingo e criar os registros ausentes dos modulos selecionados. A preparacao preserva contagens e turnos encerrados. O SENIB exige uma rodada ativa com aulas na data (ou salas de uma rodada manual).
+
+Em **Usuarios**, os perfis `estatistica_culto`, `nova_teens`, `um_com_deus`, `nova_baby`, `nova_infantil` e `nova_kids` permitem consultar e lancar contagens apenas nos respectivos modulos. E possivel combinar perfis de modulo. Perfis gerais (`admin`, `estatistica`, `verdinho`, `pastor`) continuam dando acesso amplo conforme suas permissoes existentes; nao os atribua a quem deve ficar restrito a um modulo.
+
+A migration `20260930120000_module_roles` adiciona e cadastra os novos perfis, sem precisar executar o seed em producao. O container da API ja executa `prisma migrate deploy` ao iniciar. Publique a API com a migration antes do frontend. Testes de permissoes: `npm run test:access -w @estatisticas-senib/api`.
+
 ## Observacao de banco
 
 O schema Prisma agora esta configurado para `MySQL`, como exigido no SDD. Para executar de ponta a ponta ainda e necessario apontar `DATABASE_URL` para uma instancia MySQL valida e aplicar as migrations quando a base estiver disponivel.

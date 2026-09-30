@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../common/auth.guard';
+import { RolesGuard } from '../common/roles.guard';
 import { CurrentUser } from '../common/current-user.decorator';
 import { Roles } from '../common/roles.decorator';
 import { ProgramasInfantisService, ProgramaInfantil } from './programas-infantis.service';
@@ -7,6 +9,7 @@ import { UpdateProgramaDto } from './dto/update-programa.dto';
 
 function controllerFor(programa: ProgramaInfantil) {
   @Controller(programa)
+  @UseGuards(AuthGuard, RolesGuard)
   class ProgramaController {
     constructor(private readonly service: ProgramasInfantisService) {}
 

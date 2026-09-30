@@ -10,6 +10,12 @@ async function main() {
     { code: RoleCode.estatistica, nome: 'Estatistica' },
     { code: RoleCode.verdinho, nome: 'Verdinho' },
     { code: RoleCode.pastor, nome: 'Pastor' },
+    { code: RoleCode.estatistica_culto, nome: 'Culto de domingo' },
+    { code: RoleCode.nova_teens, nome: 'Nova Teens' },
+    { code: RoleCode.um_com_deus, nome: 'Um com Deus' },
+    { code: RoleCode.nova_baby, nome: 'Nova Baby' },
+    { code: RoleCode.nova_infantil, nome: 'Nova Infantil' },
+    { code: RoleCode.nova_kids, nome: 'Nova Kids' },
   ];
 
   for (const role of roleEntries) {

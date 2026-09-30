@@ -18,12 +18,25 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const grantedRoles = request.user?.roles ?? [];
+    const moduleRoles: Record<string, string> = {
+      cultos: 'estatistica_culto', 'nova-teens': 'nova_teens',
+      'um-com-deus': 'um_com_deus', 'nova-baby': 'nova_baby',
+      'nova-infantil': 'nova_infantil', 'nova-kids': 'nova_kids',
+    };
+    const scoped = !grantedRoles.some((role) => ['admin', 'estatistica', 'verdinho', 'pastor'].includes(role));
+    const path = request.path.replace(/^\/api\//, '').split('/');
+    const permittedAction = (request.method === 'GET' && ['datas', 'dashboard', 'painel'].includes(path[1]))
+      || (request.method === 'PATCH' && /^\d+$/.test(path[1] ?? ''));
+    if (permittedAction && grantedRoles.includes(moduleRoles[path[0]])) return true;
+    if (scoped) {
+      throw new ForbiddenException('Perfil sem acesso a este modulo ou operacao.');
+    }
+
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
-
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const grantedRoles = request.user?.roles ?? [];
 
     if (requiredRoles.some((role) => grantedRoles.includes(role))) {
       return true;

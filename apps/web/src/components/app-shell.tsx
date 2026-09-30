@@ -8,6 +8,7 @@ import { DashboardTab } from '../features/dashboard/dashboard-tab';
 import { PainelTab } from '../features/painel/painel-tab';
 import { RelatorioTab } from '../features/relatorios/relatorio-tab';
 import { UsersTab } from '../features/users/users-tab';
+import { PrepararDomingo } from '../features/domingo/preparar-domingo';
 import { apiFetch } from '../lib/api';
 import type { AppTab, OperationMode, SessionPayload } from '../types/contracts';
 
@@ -17,6 +18,7 @@ function resolveTab(value: string | null): AppTab {
     value === 'configuracao' ||
     value === 'dashboard' ||
     value === 'usuarios' ||
+    value === 'domingo' ||
     value === 'relatorio'
   ) {
     return value;
@@ -41,8 +43,14 @@ export function AppShell() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const activeTab = resolveTab(searchParams.get('tab'));
-  const activeOperation = resolveOperation(searchParams.get('op'));
+  const moduleRoles: Record<string, OperationMode> = { estatistica_culto: 'culto', nova_teens: 'nova_teens', um_com_deus: 'um_com_deus', nova_baby: 'nova_baby', nova_infantil: 'nova_infantil', nova_kids: 'nova_kids' };
+  const roles = session?.user?.roles ?? [];
+  const generalAccess = roles.some((role) => ['admin', 'estatistica', 'verdinho', 'pastor'].includes(role));
+  const allowedOperations = generalAccess ? ['senib', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] : roles.map((role) => moduleRoles[role]).filter(Boolean);
+  const requestedOperation = resolveOperation(searchParams.get('op'));
+  const activeOperation = (allowedOperations.includes(requestedOperation) ? requestedOperation : allowedOperations[0] ?? 'senib') as OperationMode;
+  const requestedTab = resolveTab(searchParams.get('tab'));
+  const activeTab = !generalAccess && ['relatorio', 'usuarios', 'configuracao', 'domingo'].includes(requestedTab) ? 'painel' : requestedTab;
 
   async function refreshSession() {
     const payload = await apiFetch<SessionPayload>('/auth/session', {
@@ -77,7 +85,7 @@ export function AppShell() {
     }
 
     const canViewPainel = session.user.roles.some((role) =>
-      ['admin', 'estatistica', 'verdinho'].includes(role),
+      ['admin', 'estatistica', 'verdinho', ...Object.keys(moduleRoles)].includes(role),
     );
     const canManageRodadas = session.user.roles.some((role) => ['admin', 'estatistica'].includes(role));
 
@@ -94,7 +102,7 @@ export function AppShell() {
     const user = session?.user;
     return {
       canViewPainel: user
-        ? user.roles.some((role) => ['admin', 'estatistica', 'verdinho'].includes(role))
+        ? user.roles.some((role) => ['admin', 'estatistica', 'verdinho', ...Object.keys(moduleRoles)].includes(role))
         : false,
       canManageRodadas: user
         ? user.roles.some((role) => ['admin', 'estatistica'].includes(role))
@@ -127,12 +135,16 @@ export function AppShell() {
     );
   }
 
+  if (!allowedOperations.length) return <main className="screen-state">Seu usuário ainda não tem um módulo autorizado. Solicite acesso ao administrador.</main>;
+
   return (
     <main className="shell">
       <header className="topbar">
         <div>
           <p className="eyebrow">
-            {activeTab === 'relatorio'
+            {activeTab === 'domingo'
+              ? 'Preparação da Semana'
+              : activeTab === 'relatorio'
               ? 'Consolidação Semanal'
               : activeOperation === 'culto'
               ? 'Operação Local de Culto'
@@ -169,6 +181,7 @@ export function AppShell() {
       </header>
 
       <nav className="nav-tabs" aria-label="Navegacao principal">
+        {permissions.canManageRodadas && <button type="button" className={activeTab === 'domingo' ? 'tab-active' : 'tab-button'} onClick={() => setActiveTab('domingo')}>Preparar domingo</button>}
         {permissions.canViewPainel ? (
           <button
             type="button"
@@ -194,13 +207,13 @@ export function AppShell() {
         >
           Dashboard
         </button>
-        <button
+        {generalAccess && <button
           type="button"
           className={activeTab === 'relatorio' ? 'tab-active' : 'tab-button'}
           onClick={() => setActiveTab('relatorio')}
         >
           Relatório
-        </button>
+        </button>}
         {permissions.canViewUsers ? (
           <button
             type="button"
@@ -212,10 +225,11 @@ export function AppShell() {
         ) : null}
       </nav>
 
-      {activeTab !== 'usuarios' && activeTab !== 'relatorio' ? (
+      {activeTab !== 'usuarios' && activeTab !== 'relatorio' && activeTab !== 'domingo' ? (
         <div className="operation-switch" role="group" aria-label="Operação estatística">
           <button
             type="button"
+            hidden={!allowedOperations.includes('senib')}
             className={activeOperation === 'senib' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('senib')}
           >
@@ -223,6 +237,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
+            hidden={!allowedOperations.includes('culto')}
             className={activeOperation === 'culto' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('culto')}
           >
@@ -230,6 +245,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
+            hidden={!allowedOperations.includes('nova_teens')}
             className={activeOperation === 'nova_teens' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('nova_teens')}
           >
@@ -237,6 +253,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
+            hidden={!allowedOperations.includes('um_com_deus')}
             className={activeOperation === 'um_com_deus' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('um_com_deus')}
           >
@@ -244,6 +261,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
+            hidden={!allowedOperations.includes('nova_baby')}
             className={activeOperation === 'nova_baby' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('nova_baby')}
           >
@@ -251,6 +269,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
+            hidden={!allowedOperations.includes('nova_infantil')}
             className={activeOperation === 'nova_infantil' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('nova_infantil')}
           >
@@ -258,6 +277,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
+            hidden={!allowedOperations.includes('nova_kids')}
             className={activeOperation === 'nova_kids' ? 'tab-active' : 'tab-button'}
             onClick={() => setActiveOperation('nova_kids')}
           >
@@ -267,13 +287,14 @@ export function AppShell() {
       ) : null}
 
       {activeTab === 'painel' && permissions.canViewPainel ? (
-        <PainelTab user={session.user} operation={activeOperation} />
+        <PainelTab key={activeOperation} user={session.user} operation={activeOperation} />
       ) : null}
       {activeTab === 'configuracao' && permissions.canManageRodadas ? (
-        <ConfiguracaoTab user={session.user} operation={activeOperation} />
+        <ConfiguracaoTab key={activeOperation} user={session.user} operation={activeOperation} />
       ) : null}
-      {activeTab === 'dashboard' ? <DashboardTab operation={activeOperation} /> : null}
-      {activeTab === 'relatorio' ? <RelatorioTab /> : null}
+      {activeTab === 'dashboard' ? <DashboardTab key={activeOperation} operation={activeOperation} /> : null}
+      {activeTab === 'domingo' && permissions.canManageRodadas ? <PrepararDomingo onConfigure={() => router.replace(`${pathname}?tab=configuracao&op=senib`)} /> : null}
+      {activeTab === 'relatorio' && generalAccess ? <RelatorioTab /> : null}
       {activeTab === 'usuarios' && permissions.canViewUsers ? <UsersTab /> : null}
     </main>
   );

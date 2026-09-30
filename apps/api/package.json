@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:access": "npm run build && node --test tests/module-access.test.cjs",
     "build": "tsc -p tsconfig.build.json",
     "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "start": "node dist/main.js",

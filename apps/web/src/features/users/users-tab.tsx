@@ -2,15 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
-import { roleOptions, type UsersPayload } from '../../types/contracts';
+import { roleLabels, roleOptions, type UsersPayload } from '../../types/contracts';
 
 export function UsersTab() {
+  const [feedback, setFeedback] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  async function save(action: () => Promise<void>) {
+    setSaving(true); setError(''); setFeedback('');
+    try { await action(); setFeedback('Usuário salvo. As permissões serão aplicadas nas próximas requisições.'); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Falha ao salvar usuário.'); }
+    finally { setSaving(false); }
+  }
   const [payload, setPayload] = useState<UsersPayload | null>(null);
   const [form, setForm] = useState({
     nome: '',
     login: '',
     senha: '',
-    roles: ['verdinho'] as string[],
+    roles: [] as string[],
   });
   const [passwordDrafts, setPasswordDrafts] = useState<Record<number, string>>({});
   const [editDrafts, setEditDrafts] = useState<
@@ -35,11 +44,13 @@ export function UsersTab() {
   }
 
   useEffect(() => {
-    loadUsers();
+    loadUsers().catch((err) => setError(err instanceof Error ? err.message : 'Falha ao carregar usuários.'));
   }, []);
 
   return (
     <section className="layout-grid">
+      {error && <p role="alert" className="error-message span-full">{error}</p>}
+      {feedback && <p role="status" className="span-full">{feedback}</p>}
       <article className="panel-card">
         <header className="section-header">
           <div>
@@ -51,12 +62,14 @@ export function UsersTab() {
           className="form-stack"
           onSubmit={async (event) => {
             event.preventDefault();
-            await apiFetch('/admin/users', {
-              method: 'POST',
-              body: JSON.stringify(form),
+            await save(async () => {
+              await apiFetch('/admin/users', {
+                method: 'POST',
+                body: JSON.stringify(form),
+              });
+              setForm({ nome: '', login: '', senha: '', roles: [] });
+              await loadUsers();
             });
-            setForm({ nome: '', login: '', senha: '', roles: ['verdinho'] });
-            await loadUsers();
           }}
         >
           <label className="field">
@@ -94,6 +107,7 @@ export function UsersTab() {
           </label>
           <fieldset className="checkbox-group">
             <legend>Perfis</legend>
+            <p>Selecione os módulos que a pessoa pode consultar e atualizar. Perfis gerais liberam todos os módulos, mesmo com um perfil específico marcado.</p>
             {roleOptions.map((role) => (
               <label key={role} className="checkbox-item">
                 <input
@@ -108,11 +122,11 @@ export function UsersTab() {
                     }));
                   }}
                 />
-                <span>{role}</span>
+                <span>{roleLabels[role]}</span>
               </label>
             ))}
           </fieldset>
-          <button type="submit" className="primary-button">
+          <button type="submit" className="primary-button" disabled={saving || !form.roles.length}>
             Criar Usuário
           </button>
         </form>
@@ -183,7 +197,7 @@ export function UsersTab() {
                         }));
                       }}
                     />
-                    <span>{role}</span>
+                    <span>{roleLabels[role]}</span>
                   </label>
                 ))}
               </fieldset>
@@ -210,16 +224,19 @@ export function UsersTab() {
                 <button
                   type="button"
                   className="primary-button"
+                  disabled={saving || !(editDrafts[user.id]?.roles ?? user.roles).length}
                   onClick={async () => {
-                    await apiFetch(`/admin/users/${user.id}`, {
-                      method: 'PATCH',
-                      body: JSON.stringify({
-                        nome: editDrafts[user.id]?.nome ?? user.nome,
-                        ativo: editDrafts[user.id]?.ativo ?? user.ativo,
-                        roles: editDrafts[user.id]?.roles ?? user.roles,
-                      }),
+                    await save(async () => {
+                      await apiFetch(`/admin/users/${user.id}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                          nome: editDrafts[user.id]?.nome ?? user.nome,
+                          ativo: editDrafts[user.id]?.ativo ?? user.ativo,
+                          roles: editDrafts[user.id]?.roles ?? user.roles,
+                        }),
+                      });
+                      await loadUsers();
                     });
-                    await loadUsers();
                   }}
                 >
                   Salvar Alterações

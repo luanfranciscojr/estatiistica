@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../../lib/api';
+import { useDatedDashboard } from '../../lib/use-dated-dashboard';
 import { formatDateOnly, formatNumber } from '../../lib/format';
 import type { NovaTeensDashboardPayload } from '../../types/contracts';
 
@@ -24,24 +23,9 @@ function clampPercent(value: number) {
 }
 
 export function NovaTeensDashboardTab() {
-  const [payload, setPayload] = useState<NovaTeensDashboardPayload | null>(null);
-  const [selectedDate, setSelectedDate] = useState('');
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedDate) {
-      params.set('data_referencia', selectedDate);
-    }
-    apiFetch<NovaTeensDashboardPayload>(
-      params.size ? `/nova-teens/dashboard?${params.toString()}` : '/nova-teens/dashboard',
-      { headers: {} },
-    ).then((response) => {
-      setPayload(response);
-      if (selectedDate && !response.datas_disponiveis.includes(selectedDate)) {
-        setSelectedDate('');
-      }
-    });
-  }, [selectedDate]);
+  const { payload, selectedDate, setSelectedDate, loading, error } = useDatedDashboard<NovaTeensDashboardPayload>('/nova-teens/dashboard');
+  if (loading) return <p role="status">Carregando a data selecionada…</p>;
+  if (error) return <p role="alert" className="error-message">{error}</p>;
 
   const historico = payload?.historico ?? [];
   const totalsSeries = historico.length ? historico.slice(0, 8).map((item) => item.total_geral).reverse() : [0];
@@ -105,7 +89,7 @@ export function NovaTeensDashboardTab() {
             <label className="dashboard-select-field">
               <span>Data do encontro</span>
               <select value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)}>
-                <option value="">Todas</option>
+                {!payload?.datas_disponiveis.length && <option value="">Sem datas disponíveis</option>}
                 {(payload?.datas_disponiveis ?? []).map((item) => (
                   <option key={item} value={item}>
                     {formatDateOnly(item)}
