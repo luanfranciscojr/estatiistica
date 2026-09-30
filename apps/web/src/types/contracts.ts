@@ -344,6 +344,7 @@ export type RodadaDetailPayload = {
         id: number;
         external_id: string | null;
         materia: string;
+        datas_aulas: string[];
         local: string | null;
         sessao_senib: number;
         sessao: string | null;

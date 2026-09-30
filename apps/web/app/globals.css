@@ -2612,3 +2612,8 @@ background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 24
 @media (max-width: 640px) {
   .sunday-intro, .sunday-footer { flex-direction: column; align-items: stretch; }
 }
+.manual-aulas, .manual-aulas-editor { display: grid; gap: 12px; min-width: 0; }
+.manual-aulas-editor { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.manual-aulas-list { padding: 0; margin: 0; list-style: none; display: grid; gap: 8px; }
+.manual-aulas-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.manual-aulas button:disabled, .manual-aulas-editor button:disabled { opacity: 0.5; cursor: not-allowed; }

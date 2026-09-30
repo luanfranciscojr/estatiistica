@@ -15,6 +15,7 @@ import { Roles } from '../common/roles.decorator';
 import { CreateManualRodadaDto } from './dto/create-manual-rodada.dto';
 import { ImportRodadaDto } from './dto/import-rodada.dto';
 import { RodadasService } from './rodadas.service';
+import { AddManualAulasDto } from './dto/add-manual-aulas.dto';
 
 @Controller()
 @UseGuards(AuthGuard, RolesGuard)
@@ -82,6 +83,12 @@ export class RodadasController {
   @Roles('admin', 'estatistica')
   ativar(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: { id: number }) {
     return this.rodadasService.ativar(id, user.id);
+  }
+
+  @Post('rodadas/:id/materias/:materiaId/aulas')
+  @Roles('admin', 'estatistica')
+  adicionarAulas(@Param('id', ParseIntPipe) id: number, @Param('materiaId', ParseIntPipe) materiaId: number, @Body() body: AddManualAulasDto, @CurrentUser() user: { id: number }) {
+    return this.rodadasService.adicionarAulasManuais(id, materiaId, body.datas_aulas, user.id);
   }
 
   @Post('rodadas/:id/encerrar')

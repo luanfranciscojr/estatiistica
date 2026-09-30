@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  Max,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -15,6 +16,11 @@ class ManualMateriaDto {
 
   @IsArray()
   professores!: string[];
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  datas_aulas!: string[];
 }
 
 class ManualSalaDto {
@@ -32,6 +38,7 @@ class ManualSalaDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(2)
   sessao_senib!: number;
 
   @ValidateNested({ each: true })

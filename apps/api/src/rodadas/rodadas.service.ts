@@ -1,5 +1,6 @@
 import {
   Injectable,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -16,6 +17,7 @@ import { NibService } from '../nib/nib.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateManualRodadaDto } from './dto/create-manual-rodada.dto';
 import { ImportRodadaDto } from './dto/import-rodada.dto';
+import { manualAulaRefs } from './manual-aulas';
 
 @Injectable()
 export class RodadasService {
@@ -145,6 +147,7 @@ export class RodadasService {
               id: materia.id,
               external_id: materia.externalId,
               materia: materia.materia,
+              datas_aulas: Array.isArray(materia.datasAulasJson) ? materia.datasAulasJson.map(String) : [],
               local: materia.local,
               sessao_senib: materia.sessaoSenib ?? 1,
               sessao: materia.sessao,
@@ -421,6 +424,19 @@ export class RodadasService {
   }
 
   async criarManual(dto: CreateManualRodadaDto, actorUserId: number) {
+    const roomKeys = new Set<string>();
+    for (const sala of dto.salas) {
+      const key = `${sala.sessao_senib}:${this.buildManualSalaCodigo(sala.codigo?.trim() || sala.nome)}`;
+      if (roomKeys.has(key)) throw new BadRequestException('Sala repetida na mesma sessão. Agrupe as matérias na mesma sala.');
+      roomKeys.add(key);
+      const used = new Set<string>();
+      for (const materia of sala.materias) {
+        for (const date of manualAulaRefs(materia.datas_aulas)) {
+          if (used.has(date)) throw new BadRequestException('Duas matérias não podem ocupar a mesma sala, sessão e data.');
+          used.add(date);
+        }
+      }
+    }
     const turno = dto.turno ?? 'senib';
     const rodada = await this.prisma.$transaction(async (tx) => {
       await tx.rodada.updateMany({
@@ -453,16 +469,8 @@ export class RodadasService {
           },
         });
 
-        await tx.contagem.create({
-          data: {
-            rodadaId: createdRodada.id,
-            salaId: createdSala.id,
-            aulaRef: 'consolidado',
-            total: 0,
-          },
-        });
-
         for (const materia of sala.materias) {
+          const datasAulas = manualAulaRefs(materia.datas_aulas);
           await tx.rodadaMateria.create({
             data: {
               rodadaId: createdRodada.id,
@@ -473,10 +481,17 @@ export class RodadasService {
               sessao: `${sala.sessao_senib}º SENIB`,
               turno,
               professoresJson: materia.professores as Prisma.InputJsonValue,
+              datasAulasJson: datasAulas,
               status: 'manual',
               origem: RodadaOrigem.manual,
             },
           });
+          for (const aulaRef of datasAulas) {
+            await tx.contagem.upsert({
+              where: { rodadaId_salaId_aulaRef: { rodadaId: createdRodada.id, salaId: createdSala.id, aulaRef } },
+              update: {}, create: { rodadaId: createdRodada.id, salaId: createdSala.id, aulaRef },
+            });
+          }
         }
       }
 
@@ -498,6 +513,34 @@ export class RodadasService {
         status: rodada.status,
       },
     };
+  }
+
+  async adicionarAulasManuais(id: number, materiaId: number, dates: string[], actorUserId: number) {
+    const refs = manualAulaRefs(dates);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM Rodada WHERE id = ${id} FOR UPDATE`;
+      const rodada = await tx.rodada.findUnique({ where: { id }, include: { materias: true, salas: true } });
+      if (!rodada) throw new NotFoundException('Rodada não encontrada.');
+      if (rodada.origem !== 'manual' || rodada.status === 'encerrada' || rodada.status === 'bloqueada') {
+        throw new BadRequestException('Adicione aulas em uma rodada manual aberta.');
+      }
+      const materia = rodada.materias.find((item) => item.id === materiaId);
+      if (!materia) throw new NotFoundException('Matéria não encontrada nesta rodada.');
+      const sala = rodada.salas.find((item) => item.codigo === materia.sala && item.sessaoSenib === materia.sessaoSenib);
+      if (!sala) throw new NotFoundException('Sala da matéria não encontrada.');
+      const conflito = rodada.materias.some((item) => item.id !== materiaId && item.sala === materia.sala && item.sessaoSenib === materia.sessaoSenib && Array.isArray(item.datasAulasJson) && item.datasAulasJson.some((date) => refs.includes(String(date))));
+      if (conflito) throw new BadRequestException('Uma dessas datas já pertence a outra matéria nesta sala e sessão.');
+      const existing = Array.isArray(materia.datasAulasJson) ? materia.datasAulasJson.map(String) : [];
+      await tx.rodadaMateria.update({ where: { id: materiaId }, data: { datasAulasJson: [...new Set([...existing, ...refs])] } });
+      for (const aulaRef of refs) {
+        await tx.contagem.upsert({
+          where: { rodadaId_salaId_aulaRef: { rodadaId: id, salaId: sala.id, aulaRef } },
+          update: {}, create: { rodadaId: id, salaId: sala.id, aulaRef },
+        });
+      }
+      await tx.auditoria.create({ data: { actorUserId, acao: 'rodada.aulas.adicionar', entidade: 'rodada', entidadeId: String(id), payloadJson: { materiaId, datas: refs } } });
+    });
+    return this.detalharRodada(id);
   }
 
   private compareRodadaReferences(left: string, right: string) {

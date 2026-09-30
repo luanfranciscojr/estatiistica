@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
 
-type Sunday = { data_referencia: string; items: Array<{ key: string; label: string; disponivel: boolean; detalhe?: string; turnos: Array<{ ordem: number; preparado: boolean }> }> };
+type Sunday = { data_referencia: string; items: Array<{ key: string; label: string; disponivel: boolean; detalhe?: string; pode_criar_aulas?: boolean; total_materias?: number; turnos: Array<{ ordem: number; preparado: boolean }> }> };
 
 function nextSunday() {
   const date = new Date();
@@ -35,12 +35,12 @@ export function PrepararDomingo({ onConfigure }: { onConfigure: () => void }) {
     return () => controller.abort();
   }, [date, reload]);
 
-  async function prepare() {
+  async function prepare(todasMaterias = false) {
     setSaving(true); setError(''); setMessage('');
     try {
-      const payload = await apiFetch<Sunday>('/domingo/preparar', { method: 'POST', body: JSON.stringify({ data_referencia: date, modulos: selected }) });
-      setData(payload); setSelected([]);
-      setMessage('Domingo preparado. As contagens existentes foram preservadas.');
+      const payload = await apiFetch<Sunday>('/domingo/preparar', { method: 'POST', body: JSON.stringify({ data_referencia: date, modulos: todasMaterias ? ['senib'] : selected, todas_materias: todasMaterias }) });
+      setData(payload); setSelected((current) => todasMaterias ? current.filter((key) => key !== 'senib') : []);
+      setMessage(todasMaterias ? 'Aula cadastrada em todas as matérias do SENIB para este domingo. As contagens existentes foram preservadas.' : 'Domingo preparado. As contagens existentes foram preservadas.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível preparar. Tente novamente.');
     } finally { setSaving(false); }
@@ -59,10 +59,11 @@ export function PrepararDomingo({ onConfigure }: { onConfigure: () => void }) {
       <div className="sunday-grid">{data.items.map((item) => <article className={`panel-card sunday-module ${item.turnos.every((turno) => turno.preparado) ? 'sunday-ready' : ''}`} key={item.key}>
         <label className="sunday-choice"><input type="checkbox" disabled={saving || !item.disponivel} checked={selected.includes(item.key)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, item.key] : current.filter((key) => key !== item.key))} /><strong>{item.label}</strong></label>
         <p>{item.detalhe ?? 'Dois turnos de contagem'}</p>
+        {item.pode_criar_aulas && <div className="manual-aulas-editor"><p>Adicionar {date.split('-').reverse().join('/')} ao calendário das {item.total_materias} matérias da rodada e preparar as contagens.</p><button type="button" className="primary-button" disabled={saving} onClick={() => prepare(true)}>Criar aula em todas as matérias</button></div>}
         <div className="sunday-turns">{item.turnos.map((turno) => <div key={turno.ordem}><span>{turno.ordem === 1 ? 'Manhã' : 'Tarde'}</span><strong>{turno.preparado ? 'Preparado' : 'Pendente'}</strong></div>)}</div>
         {item.key === 'senib' && !item.disponivel && <button className="secondary-button" onClick={onConfigure}>Configurar SENIB</button>}
       </article>)}</div>
-      <footer className="panel-card sunday-footer"><div><strong>{selected.length} módulos selecionados</strong><p>Contagens já preenchidas e turnos encerrados são preservados.</p></div><button className="primary-button" disabled={saving || !selected.length} onClick={prepare}>{saving ? 'Preparando…' : 'Preparar selecionados'}</button></footer>
+      <footer className="panel-card sunday-footer"><div><strong>{selected.length} módulos selecionados</strong><p>Contagens já preenchidas e turnos encerrados são preservados.</p></div><button className="primary-button" disabled={saving || !selected.length} onClick={() => prepare()}>{saving ? 'Preparando…' : 'Preparar selecionados'}</button></footer>
     </>}
   </section>;
 }

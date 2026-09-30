@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Module, Post, Query, UseGuards } from '@nestjs/common';
-import { ArrayNotEmpty, ArrayUnique, IsArray, IsIn, IsString, Matches } from 'class-validator';
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsOptional, IsIn, IsString, Matches } from 'class-validator';
 import { AuthGuard } from '../common/auth.guard';
 import { RolesGuard } from '../common/roles.guard';
 import { Roles } from '../common/roles.decorator';
@@ -17,6 +17,10 @@ const modules = {
 type ModuleKey = keyof typeof modules;
 
 class PrepareSundayDto {
+  @IsOptional()
+  @IsBoolean()
+  todas_materias?: boolean;
+
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
   data_referencia!: string;
@@ -48,7 +52,7 @@ export class DomingoController {
       where: { status: 'ativa' }, orderBy: { updatedAt: 'desc' },
       include: { materias: true, salas: { include: { contagens: { where: { aulaRef } } } } },
     });
-    const salas = (rodada?.salas ?? []).filter((sala) => rodada?.origem === 'manual' || rodada?.materias.some((materia) =>
+    const salas = (rodada?.salas ?? []).filter((sala) => rodada?.materias.some((materia) =>
       materia.sala === sala.codigo && materia.sessaoSenib === sala.sessaoSenib && Array.isArray(materia.datasAulasJson) && materia.datasAulasJson.includes(aulaRef),
     ));
     return { rodada, salas, aulaRef };
@@ -65,6 +69,8 @@ export class DomingoController {
     }));
     return { data_referencia: date, items: [{
       key: 'senib', label: 'SENIB', disponivel: salas.length > 0,
+      pode_criar_aulas: rodada?.origem === 'manual' && rodada.materias.length > 0,
+      total_materias: rodada?.materias.length ?? 0,
       detalhe: salas.length ? `Rodada ${rodada?.referencia}` : 'Importe ou configure uma rodada ativa com aulas nesta data.',
       turnos: [1, 2].map((ordem) => {
         const turno = salas.filter((sala) => sala.sessaoSenib === ordem);
@@ -76,10 +82,33 @@ export class DomingoController {
   @Post('preparar')
   async prepare(@Body() dto: PrepareSundayDto, @CurrentUser() user: { id: number }) {
     const { rodada, salas, aulaRef } = await this.senib(dto.data_referencia);
-    if (dto.modulos.includes('senib') && (!rodada || !salas.length)) throw new BadRequestException('Configure as aulas do SENIB para este domingo antes de preparar.');
+    if (dto.todas_materias && (!dto.modulos.includes('senib') || rodada?.origem !== 'manual')) throw new BadRequestException('A criação em lote exige uma rodada manual ativa do SENIB.');
+    if (dto.modulos.includes('senib') && (!rodada || (!dto.todas_materias && !salas.length))) throw new BadRequestException('Configure as aulas do SENIB para este domingo antes de preparar.');
     await this.prisma.$transaction(async (tx) => {
       for (const key of dto.modulos) {
         if (key === 'senib') {
+          if (dto.todas_materias) {
+            await tx.$queryRaw`SELECT id FROM Rodada WHERE id = ${rodada!.id} FOR UPDATE`;
+            const atual = await tx.rodada.findUnique({ where: { id: rodada!.id }, include: { materias: true, salas: true } });
+            if (!atual || atual.origem !== 'manual' || atual.status !== 'ativa' || !atual.materias.length) throw new BadRequestException('Selecione uma rodada manual ativa com matérias.');
+            const used = new Set<number>();
+            const assignments = atual.materias.map((materia) => {
+              const sala = atual.salas.find((item) => item.codigo === materia.sala && item.sessaoSenib === materia.sessaoSenib);
+              if (!sala) throw new BadRequestException(`A matéria ${materia.materia} está sem sala. Configure o SENIB.`);
+              if (used.has(sala.id)) throw new BadRequestException('Há mais de uma matéria na mesma sala e sessão. Cadastre as aulas individualmente para escolher qual ocorre neste domingo.');
+              used.add(sala.id);
+              return { materia, sala };
+            });
+            for (const { materia, sala } of assignments) {
+              const dates = Array.isArray(materia.datasAulasJson) ? materia.datasAulasJson.map(String) : [];
+              await tx.rodadaMateria.update({ where: { id: materia.id }, data: { datasAulasJson: [...new Set([...dates, aulaRef])] } });
+              await tx.contagem.upsert({
+                where: { rodadaId_salaId_aulaRef: { rodadaId: atual.id, salaId: sala.id, aulaRef } },
+                update: {}, create: { rodadaId: atual.id, salaId: sala.id, aulaRef },
+              });
+            }
+            continue;
+          }
           for (const sala of salas) {
             await tx.contagem.upsert({
               where: { rodadaId_salaId_aulaRef: { rodadaId: rodada!.id, salaId: sala.id, aulaRef } },
@@ -98,7 +127,7 @@ export class DomingoController {
           );
         }
       }
-      await tx.auditoria.create({ data: { actorUserId: user.id, acao: 'domingo.prepare', entidade: 'domingo', entidadeId: dto.data_referencia, payloadJson: { modulos: dto.modulos } } });
+      await tx.auditoria.create({ data: { actorUserId: user.id, acao: 'domingo.prepare', entidade: 'domingo', entidadeId: dto.data_referencia, payloadJson: { modulos: dto.modulos, todas_materias: dto.todas_materias ?? false } } });
     });
     return this.status(dto.data_referencia);
   }

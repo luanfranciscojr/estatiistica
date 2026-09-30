@@ -5,6 +5,7 @@ import { CultoConfiguracaoTab } from './culto-configuracao-tab';
 import { NovaTeensConfiguracaoTab } from './nova-teens-configuracao-tab';
 import { ProgramaInfantilConfiguracaoTab } from '../programas-infantis/programa-infantil-configuracao-tab';
 import { apiFetch } from '../../lib/api';
+import { AddManualAulas, ManualAulaDates } from './manual-aulas';
 import { formatDate, formatNumber, formatSessaoLabel } from '../../lib/format';
 import type {
   ImportacaoElegivelPayload,
@@ -50,6 +51,8 @@ export function ConfiguracaoTab({
   const [importacao, setImportacao] = useState<ImportacaoElegivelPayload | null>(null);
   const [nibDiagnostico, setNibDiagnostico] = useState<NibDiagnosticoPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savingManual, setSavingManual] = useState(false);
+  const [manualMessage, setManualMessage] = useState('');
   const [manualDraft, setManualDraft] = useState({
     referencia: '',
     salas: [] as Array<{
@@ -59,6 +62,7 @@ export function ConfiguracaoTab({
       sessao_senib: number;
       materia: string;
       professores: string;
+      datas_aulas: string[];
     }>,
   });
   const [salaDraft, setSalaDraft] = useState({
@@ -68,6 +72,7 @@ export function ConfiguracaoTab({
     sessao_senib: 1,
     materia: '',
     professores: '',
+    datas_aulas: [] as string[],
   });
   const [selectedImportRodada, setSelectedImportRodada] = useState<{
     external_id: string;
@@ -81,7 +86,6 @@ export function ConfiguracaoTab({
   const [selectedImportAulas, setSelectedImportAulas] = useState<string[]>([]);
   const [manualNibRodadaId, setManualNibRodadaId] = useState('');
   const [configTab, setConfigTab] = useState<'importar' | 'manual'>('importar');
-  const rodadaOptions = [...new Set(rodadas.map((rodada) => rodada.referencia).filter(Boolean))];
 
   const canManageRodadas = user.roles.some((role) => ['admin', 'estatistica'].includes(role));
 
@@ -505,6 +509,14 @@ export function ConfiguracaoTab({
               className="form-stack config-workspace"
               onSubmit={async (event) => {
                 event.preventDefault();
+                if (salaDraft.nome.trim() || salaDraft.materia.trim() || salaDraft.datas_aulas.length) {
+                  setError('Adicione a matéria em edição à lista antes de criar a rodada.');
+                  return;
+                }
+                setSavingManual(true);
+                setError(null);
+                setManualMessage('');
+                try {
                 await apiFetch('/rodadas/manual', {
                   method: 'POST',
                   body: JSON.stringify({
@@ -517,6 +529,7 @@ export function ConfiguracaoTab({
                       materias: [
                         {
                           materia: sala.materia,
+                          datas_aulas: sala.datas_aulas,
                           professores: sala.professores
                             .split(',')
                             .map((item) => item.trim())
@@ -527,22 +540,25 @@ export function ConfiguracaoTab({
                   }),
                 });
                 setManualDraft({ referencia: '', salas: [] });
+                setManualMessage('Rodada criada com aulas por data. Consulte o painel ou use “Ver matérias e aulas” para adicionar novas datas.');
                 await loadRodadasAndLogs();
+                } catch (err) { setError(err instanceof Error ? err.message : 'Falha ao criar a rodada.'); }
+                finally { setSavingManual(false); }
               }}
             >
               <div className="import-toolbar-card">
+                {manualMessage && <p role="status">{manualMessage}</p>}
                 <div className="config-intro">
-                  <strong>Cadastro de contingência</strong>
+                  <strong>Rodada, matérias e calendário de aulas</strong>
                   <span>
-                    Use esse fluxo apenas quando precisar criar uma rodada local sem depender da
-                    integração da NIB.
+                    Cadastre cada matéria com sala, sessão, professores e datas de aula.
+                    Criar a rodada a torna ativa e encerra a rodada atualmente ativa.
                   </span>
                 </div>
                 <div className="form-grid">
                   <label className="field">
                     <span>Rodada</span>
                     <input
-                      list="manual-rodada-options"
                       name="referencia"
                       value={manualDraft.referencia}
                       onChange={(event) =>
@@ -551,14 +567,9 @@ export function ConfiguracaoTab({
                           referencia: event.target.value,
                         }))
                       }
-                      placeholder="Selecione uma rodada existente ou digite uma nova"
+                      placeholder="Referência da nova rodada, ex.: 2026.4"
                       required
                     />
-                    <datalist id="manual-rodada-options">
-                      {rodadaOptions.map((referencia) => (
-                        <option key={referencia} value={referencia} />
-                      ))}
-                    </datalist>
                   </label>
                 </div>
                 <div className="form-grid form-grid-manual">
@@ -627,12 +638,18 @@ export function ConfiguracaoTab({
                     />
                   </label>
                 </div>
+                <ManualAulaDates dates={salaDraft.datas_aulas} onChange={(dates) => setSalaDraft((current) => ({ ...current, datas_aulas: dates }))} disabled={savingManual} />
                 <button
                   type="button"
                   className="secondary-button"
+                  disabled={savingManual}
                   onClick={() => {
-                    if (!salaDraft.nome || !salaDraft.materia) {
-                      setError('Informe o nome da sala e a matéria antes de adicionar.');
+                    if (!salaDraft.nome.trim() || !salaDraft.materia.trim() || !salaDraft.datas_aulas.length) {
+                      setError('Informe a sala, a matéria e pelo menos uma data de aula.');
+                      return;
+                    }
+                    if (manualDraft.salas.some((sala) => sala.sessao_senib === salaDraft.sessao_senib && buildManualSalaCodigo(sala.codigo || sala.nome) === buildManualSalaCodigo(salaDraft.codigo || salaDraft.nome))) {
+                      setError('Esta sala já foi adicionada nesta sessão. Remova o item da lista para corrigir seu calendário.');
                       return;
                     }
                     setManualDraft((current) => ({
@@ -646,11 +663,12 @@ export function ConfiguracaoTab({
                       sessao_senib: 1,
                       materia: '',
                       professores: '',
+                      datas_aulas: [],
                     });
                     setError(null);
                   }}
                 >
-                  Adicionar Sala
+                  Adicionar matéria e aulas
                 </button>
                 {manualDraft.salas.length > 0 ? (
                   <ul className="draft-list">
@@ -658,6 +676,12 @@ export function ConfiguracaoTab({
                       <li key={`${sala.codigo || sala.nome}-${index}`}>
                         <strong>{sala.codigo || buildManualSalaCodigo(sala.nome)}</strong> {sala.nome} ·{' '}
                         {formatSessaoLabel(sala.sessao_senib)} · {sala.materia}
+                        <p>{sala.datas_aulas.map((date) => date.split('-').reverse().join('/')).join(' · ')}</p>
+                        <button type="button" className="secondary-button" disabled={savingManual} onClick={() => {
+                          setSalaDraft(sala);
+                          setManualDraft((current) => ({ ...current, salas: current.salas.filter((_, itemIndex) => itemIndex !== index) }));
+                        }}>Editar matéria e aulas</button>
+                        <button type="button" className="secondary-button" disabled={savingManual} onClick={() => setManualDraft((current) => ({ ...current, salas: current.salas.filter((_, itemIndex) => itemIndex !== index) }))}>Remover</button>
                       </li>
                     ))}
                   </ul>
@@ -665,9 +689,9 @@ export function ConfiguracaoTab({
                 <button
                   type="submit"
                   className="primary-button"
-                  disabled={manualDraft.salas.length === 0}
+                  disabled={savingManual || manualDraft.salas.length === 0 || !!salaDraft.nome.trim() || !!salaDraft.materia.trim() || !!salaDraft.datas_aulas.length}
                 >
-                  Criar Rodada Manual
+                  {savingManual ? 'Criando…' : 'Criar rodada com aulas'}
                 </button>
               </div>
             </form>
@@ -734,7 +758,7 @@ export function ConfiguracaoTab({
                     setSelectedRodada(payload.rodada);
                   }}
                 >
-                  Ver Detalhes
+                  {rodada.origem === 'manual' ? 'Ver matérias e aulas' : 'Ver detalhes'}
                 </button>
                 {rodada.ativa ? (
                   <button
@@ -839,6 +863,8 @@ export function ConfiguracaoTab({
                         <li key={materia.id}>
                           <strong>{materia.materia}</strong>
                           <span>{materia.professores.join(', ') || 'Professor não informado'}</span>
+                          <p>Aulas: {materia.datas_aulas?.length ? materia.datas_aulas.join(' · ') : 'Sem calendário cadastrado'}</p>
+                          {selectedRodada.origem === 'manual' && !['encerrada', 'bloqueada'].includes(selectedRodada.status) && <AddManualAulas key={materia.id} rodadaId={selectedRodada.id} materiaId={materia.id} onSaved={(rodada) => setSelectedRodada((current) => current?.id === rodada.id ? rodada : current)} />}
                         </li>
                       ))}
                     </ul>
