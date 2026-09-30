@@ -69,7 +69,7 @@ export class DomingoController {
     }));
     return { data_referencia: date, items: [{
       key: 'senib', label: 'SENIB', disponivel: salas.length > 0,
-      pode_criar_aulas: rodada?.origem === 'manual' && rodada.materias.length > 0,
+      pode_criar_aulas: !!rodada && rodada.materias.length > 0,
       total_materias: rodada?.materias.length ?? 0,
       detalhe: salas.length ? `Rodada ${rodada?.referencia}` : 'Importe ou configure uma rodada ativa com aulas nesta data.',
       turnos: [1, 2].map((ordem) => {
@@ -82,7 +82,7 @@ export class DomingoController {
   @Post('preparar')
   async prepare(@Body() dto: PrepareSundayDto, @CurrentUser() user: { id: number }) {
     const { rodada, salas, aulaRef } = await this.senib(dto.data_referencia);
-    if (dto.todas_materias && (!dto.modulos.includes('senib') || rodada?.origem !== 'manual')) throw new BadRequestException('A criação em lote exige uma rodada manual ativa do SENIB.');
+    if (dto.todas_materias && (!dto.modulos.includes('senib') || !rodada)) throw new BadRequestException('A criação em lote exige uma rodada ativa do SENIB.');
     if (dto.modulos.includes('senib') && (!rodada || (!dto.todas_materias && !salas.length))) throw new BadRequestException('Configure as aulas do SENIB para este domingo antes de preparar.');
     await this.prisma.$transaction(async (tx) => {
       for (const key of dto.modulos) {
@@ -90,7 +90,7 @@ export class DomingoController {
           if (dto.todas_materias) {
             await tx.$queryRaw`SELECT id FROM Rodada WHERE id = ${rodada!.id} FOR UPDATE`;
             const atual = await tx.rodada.findUnique({ where: { id: rodada!.id }, include: { materias: true, salas: true } });
-            if (!atual || atual.origem !== 'manual' || atual.status !== 'ativa' || !atual.materias.length) throw new BadRequestException('Selecione uma rodada manual ativa com matérias.');
+            if (!atual || atual.status !== 'ativa' || !atual.materias.length) throw new BadRequestException('Selecione uma rodada ativa com matérias.');
             const used = new Set<number>();
             const assignments = atual.materias.map((materia) => {
               const sala = atual.salas.find((item) => item.codigo === materia.sala && item.sessaoSenib === materia.sessaoSenib);

@@ -312,6 +312,13 @@ export class RodadasService {
       }
 
       for (const item of selected) {
+        const existingMateria = await tx.rodadaMateria.findFirst({
+          where: item.externalId
+            ? { externalId: item.externalId, rodadaId: targetRodada.id }
+            : { rodadaId: targetRodada.id, materia: item.materia, sala: item.sala, sessaoSenib: item.sessaoSenib },
+        });
+        const existingDates = Array.isArray(existingMateria?.datasAulasJson)
+          ? existingMateria.datasAulasJson.map(String) : [];
         const materiaData = {
           rodadaId: targetRodada.id,
           externalRodadaId: item.externalRodadaId,
@@ -324,7 +331,7 @@ export class RodadasService {
           professoresJson: item.professores as Prisma.InputJsonValue,
           status: item.status,
           origem: RodadaOrigem.api_nib,
-          datasAulasJson: item.datasAulas as Prisma.InputJsonValue,
+          datasAulasJson: [...new Set([...existingDates, ...item.datasAulas])] as Prisma.InputJsonValue,
         };
 
         if (item.externalId) {
@@ -338,15 +345,6 @@ export class RodadasService {
           });
           continue;
         }
-
-        const existingMateria = await tx.rodadaMateria.findFirst({
-          where: {
-            rodadaId: targetRodada.id,
-            materia: item.materia,
-            sala: item.sala,
-            sessaoSenib: item.sessaoSenib,
-          },
-        });
 
         if (existingMateria) {
           await tx.rodadaMateria.update({

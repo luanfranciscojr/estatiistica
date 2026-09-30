@@ -81,7 +81,7 @@ Administradores e usuarios de estatistica geral podem usar **Preparar domingo** 
 
 No **Cadastro manual** do SENIB, informe as datas de domingo de cada materia antes de adicionar a sala. Novas rodadas criam contagens por aula, sem depender da importacao NIB. Em **Ver materias e aulas**, uma rodada manual aberta permite acrescentar datas. Contagens antigas, inclusive o consolidado legado, permanecem preservadas; nao sao redistribuidas automaticamente pelas novas aulas. Rodadas encerradas precisam ser reabertas para receber novas datas.
 
-Em **Preparar domingo**, o card SENIB oferece **Criar aula em todas as materias** para rodadas manuais ativas. O botao adiciona a data selecionada ao calendario de todas as materias e cria apenas as contagens ausentes. Se varias materias dividirem a mesma sala e sessao, cadastre a data individualmente para evitar ambiguidades.
+Em **Preparar domingo**, o card SENIB oferece **Criar aula em todas as materias** para rodadas ativas, manuais ou importadas da NIB. O botao adiciona a data selecionada ao calendario de todas as materias e cria apenas as contagens ausentes. Uma nova importacao da mesma materia preserva as datas ja cadastradas e suas contagens. Se varias materias dividirem a mesma sala e sessao, resolva o conflito no cadastro antes de preparar em lote.
 
 Em **Usuarios**, os perfis `estatistica_culto`, `nova_teens`, `um_com_deus`, `nova_baby`, `nova_infantil` e `nova_kids` permitem consultar e lancar contagens apenas nos respectivos modulos. E possivel combinar perfis de modulo. Perfis gerais (`admin`, `estatistica`, `verdinho`, `pastor`) continuam dando acesso amplo conforme suas permissoes existentes; nao os atribua a quem deve ficar restrito a um modulo.
 

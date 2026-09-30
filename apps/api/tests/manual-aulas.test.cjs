@@ -10,6 +10,38 @@ test('lesson dates are real Sundays, deduplicated and ordered', () => {
   for (const date of ['2026-02-30', '2026-10-05', '', '04/10/2026']) assert.throws(() => manualAulaRefs([date]), { status: 400 });
 });
 
+test('imported active rounds expose bulk lesson preparation', async () => {
+  const controller = new DomingoController({ $queryRawUnsafe: async () => [] });
+  controller.senib = async () => ({ rodada: { origem: 'api_nib', referencia: '2026.4', materias: [{ id: 1 }] }, salas: [] });
+  const result = await controller.status('2026-10-04');
+  assert.equal(result.items[0].pode_criar_aulas, true);
+  assert.equal(result.items[0].total_materias, 1);
+});
+
+for (const externalId of ['materia-1', undefined]) {
+  test(`NIB reimport preserves local dates (${externalId ? 'external ID' : 'subject matching'})`, async () => {
+    const materia = { id: 3, datasAulasJson: ['04/10/2026', '11/10/2026'] };
+    const item = { externalId, externalRodadaId: 'rodada-1', referencia: '2026.4', titulo: '2026.4', turno: 'senib', materia: 'Atos', sala: '2', sessaoSenib: 1, professores: [], datasAulas: ['04/10/2026'], status: 'ativa' };
+    const tx = {
+      rodada: { updateMany: async () => {}, update: async () => ({ id: 1 }) },
+      sala: { upsert: async () => ({ id: 2, codigo: '2', sessaoSenib: 1 }) },
+      rodadaMateria: {
+        findFirst: async () => materia,
+        upsert: async ({ update }) => { materia.datasAulasJson = update.datasAulasJson; },
+        update: async ({ data }) => { materia.datasAulasJson = data.datasAulasJson; },
+      },
+      contagem: { upsert: async ({ update }) => assert.deepEqual(update, {}) },
+    };
+    const service = new RodadasService({
+      rodada: { findFirst: async () => ({ id: 1 }) },
+      importacao: { create: async () => ({ id: 1, status: 'sucesso' }) },
+      $transaction: async (fn) => fn(tx),
+    }, { getEligibleGroupedRodadas: async () => ({ items: [item] }) }, { registrar: async () => {} });
+    await service.importarDaNib({ external_id: 'rodada-1', selected_aulas: ['04/10/2026'] }, 1);
+    assert.deepEqual(materia.datasAulasJson, ['04/10/2026', '11/10/2026']);
+  });
+}
+
 test('Sunday bulk setup adds the date to every subject once and preserves attendance', async () => {
   const rodada = { id: 1, origem: 'manual', status: 'ativa', materias: [
     { id: 3, materia: 'Atos', sala: '2', sessaoSenib: 1, datasAulasJson: ['04/10/2026'] },
@@ -31,10 +63,15 @@ test('Sunday bulk setup adds the date to every subject once and preserves attend
   assert.equal(counts.get('2:04/10/2026'), 37);
   assert.equal(counts.size, 2);
   for (const materia of rodada.materias) assert.deepEqual(materia.datasAulasJson, ['04/10/2026']);
+  rodada.origem = 'api_nib';
+  await controller.prepare(dto, { id: 1 });
+  assert.equal(counts.get('2:04/10/2026'), 37);
+  assert.equal(counts.size, 2);
   rodada.materias.push({ id: 6, materia: 'Outra', sala: '2', sessaoSenib: 1, datasAulasJson: [] });
   await assert.rejects(controller.prepare(dto, { id: 1 }), { status: 400 });
   assert.equal(counts.size, 2);
-  rodada.origem = 'api_nib';
+  rodada.materias.pop();
+  rodada.status = 'encerrada';
   await assert.rejects(controller.prepare(dto, { id: 1 }), { status: 400 });
 });
 
