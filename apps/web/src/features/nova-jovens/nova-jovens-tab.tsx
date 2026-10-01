@@ -70,6 +70,63 @@ export function NovaJovensTab({ mode }: { mode: 'painel' | 'configuracao' | 'das
   }
 
   const encontro = payload?.encontro;
+  if (mode === 'painel') return (
+    <section className="layout-grid">
+      <article className="panel-card hero-card span-full">
+        <div className="hero-topline">
+          <span className="date-pill">{encontro ? formatDateOnly(encontro.data_referencia) : 'Sem data preparada'}</span>
+          <span className="status-live">{encontro ? 'Operação Nova Jovens pronta' : 'Prepare o encontro na configuração'}</span>
+        </div>
+        <header className="hero-header">
+          <div>
+            <p className="eyebrow">Controle de Presença</p>
+            <h2>Painel Operacional Nova Jovens</h2>
+            <p className="body-copy hero-copy">{encontro
+              ? `${formatNumber(encontro.total)} presentes no encontro da data selecionada.`
+              : 'Prepare o encontro em Preparar domingo ou na configuração do Nova Jovens para liberar os lançamentos.'}</p>
+          </div>
+          <div className="stat-chip stat-chip-hero">
+            <span>Total do dia</span>
+            <strong>{formatNumber(encontro?.total ?? 0)}</strong>
+            <small>Nova Jovens</small>
+          </div>
+        </header>
+        <div className="action-row panel-toolbar-row">
+          <label className="field compact-field">
+            <span>Data do encontro</span>
+            <select value={selected} onChange={(event) => setSelected(event.target.value)} disabled={!payload?.items.length}>
+              {!payload?.items.length && <option value="">Nenhuma data preparada</option>}
+              {payload?.items.map((item) => <option key={item.id} value={item.data_referencia}>{formatDateOnly(item.data_referencia)}</option>)}
+            </select>
+          </label>
+          {encontro && <span className="status-live">Domingo de referência: {formatDateOnly(encontro.domingo_referencia)}</span>}
+        </div>
+      </article>
+      <article className="panel-card span-full">
+        <header className="section-header">
+          <div><p className="eyebrow">Painel Operacional</p><h2>Contagem do Nova Jovens</h2></div>
+        </header>
+        {error && <div role="alert"><p className="error-banner">{error}</p><button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Tentar novamente</button></div>}
+        {loading ? <p role="status">Carregando encontro…</p> : encontro ? (
+          <div className="culto-counter-grid">
+            <section className="counter-card culto-counter-card">
+              <div className="counter-head">
+                <div><strong>Nova Jovens</strong><span>{formatDateOnly(encontro.data_referencia)}</span></div>
+                <span className="counter-total">{formatNumber(encontro.total)}</span>
+              </div>
+              <div className="culto-counter-body">
+                <div className="culto-counter-value">
+                  <span>Total geral</span>
+                  <AttendanceCounter key={`${selected}:${encontro.id}`} value={encontro.total} label="Participantes do Nova Jovens" onCommit={(action) => commit<Payload>(`/nova-jovens/${encontro.id}`, 'total', action, (data) => { setPayload(data); return data.encontro!.total; })} />
+                </div>
+              </div>
+              {encontro.observacao && <p>{encontro.observacao}</p>}
+            </section>
+          </div>
+        ) : <p>Nenhum encontro preparado. Utilize Preparar domingo ou a configuração do Nova Jovens.</p>}
+      </article>
+    </section>
+  );
   return <section className="layout-grid">
     <article className="panel-card span-full">
       <header className="section-header"><div><p className="eyebrow">Culto de sábado</p><h2>Nova Jovens</h2><p>Um encontro por fim de semana, separado dos cultos de domingo.</p></div></header>
@@ -89,7 +146,7 @@ export function NovaJovensTab({ mode }: { mode: 'painel' | 'configuracao' | 'das
       {loading ? <p role="status">Carregando encontro…</p> : encontro ? <section className="counter-card culto-counter-card">
         <header className="section-header"><div><h3>Nova Jovens · {formatDateOnly(encontro.data_referencia)}</h3><p>Domingo de referência: {formatDateOnly(encontro.domingo_referencia)}</p></div><span className="status-live">{formatNumber(encontro.total)} presentes</span></header>
         {encontro.observacao && <p>{encontro.observacao}</p>}
-        {mode === 'painel' ? <div className="counter-row"><span>Participantes</span><AttendanceCounter key={encontro.id} value={encontro.total} label="Participantes do Nova Jovens" onCommit={(action) => commit<Payload>(`/nova-jovens/${encontro.id}`, 'total', action, (data) => { setPayload(data); return data.encontro!.total; })} /></div> : <div className="dashboard-kpi-card dashboard-kpi-card-emerald"><span>Total de participantes</span><strong>{formatNumber(encontro.total)}</strong><small>Encontro selecionado</small></div>}
+        <div className="dashboard-kpi-card dashboard-kpi-card-emerald"><span>Total de participantes</span><strong>{formatNumber(encontro.total)}</strong><small>Encontro selecionado</small></div>
       </section> : !loading && <p>Nenhum encontro preparado. Utilize Preparar domingo ou a configuração do Nova Jovens.</p>}
     </article>
   </section>;
