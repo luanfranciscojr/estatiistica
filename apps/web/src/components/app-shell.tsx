@@ -28,7 +28,7 @@ function resolveTab(value: string | null): AppTab {
 }
 
 function resolveOperation(value: string | null): OperationMode {
-  if (value === 'culto' || value === 'nova_teens' || value === 'um_com_deus' || value === 'nova_baby' || value === 'nova_infantil' || value === 'nova_kids') {
+  if (value === 'nova_jovens' || value === 'culto' || value === 'nova_teens' || value === 'um_com_deus' || value === 'nova_baby' || value === 'nova_infantil' || value === 'nova_kids') {
     return value;
   }
 
@@ -43,14 +43,16 @@ export function AppShell() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const moduleRoles: Record<string, OperationMode> = { estatistica_culto: 'culto', nova_teens: 'nova_teens', um_com_deus: 'um_com_deus', nova_baby: 'nova_baby', nova_infantil: 'nova_infantil', nova_kids: 'nova_kids' };
+  const moduleRoles: Record<string, OperationMode> = { nova_jovens: 'nova_jovens', estatistica_culto: 'culto', nova_teens: 'nova_teens', um_com_deus: 'um_com_deus', nova_baby: 'nova_baby', nova_infantil: 'nova_infantil', nova_kids: 'nova_kids' };
   const roles = session?.user?.roles ?? [];
   const generalAccess = roles.some((role) => ['admin', 'estatistica', 'verdinho', 'pastor'].includes(role));
-  const allowedOperations = generalAccess ? ['senib', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] : roles.map((role) => moduleRoles[role]).filter(Boolean);
+  const allowedOperations = generalAccess ? ['senib', 'nova_jovens', 'culto', 'nova_teens', 'um_com_deus', 'nova_baby', 'nova_infantil', 'nova_kids'] : roles.map((role) => moduleRoles[role]).filter(Boolean);
   const requestedOperation = resolveOperation(searchParams.get('op'));
   const activeOperation = (allowedOperations.includes(requestedOperation) ? requestedOperation : allowedOperations[0] ?? 'senib') as OperationMode;
   const requestedTab = resolveTab(searchParams.get('tab'));
-  const activeTab = !generalAccess && ['relatorio', 'usuarios', 'configuracao', 'domingo'].includes(requestedTab) ? 'painel' : requestedTab;
+  const canConfigure = roles.some((role) => ['admin', 'estatistica'].includes(role)) || (activeOperation === 'nova_jovens' && roles.includes('nova_jovens'));
+  const canPrepare = roles.some((role) => ['admin', 'estatistica', 'nova_jovens'].includes(role));
+  const activeTab = (!generalAccess && ['relatorio', 'usuarios'].includes(requestedTab)) || (requestedTab === 'configuracao' && !canConfigure) || (requestedTab === 'domingo' && !canPrepare) ? 'painel' : requestedTab;
 
   async function refreshSession() {
     const payload = await apiFetch<SessionPayload>('/auth/session', {
@@ -93,10 +95,10 @@ export function AppShell() {
       setActiveTab('dashboard');
     }
 
-    if (!canManageRodadas && activeTab === 'configuracao') {
+    if (!canConfigure && activeTab === 'configuracao') {
       setActiveTab(canViewPainel ? 'painel' : 'dashboard');
     }
-  }, [activeTab, session]);
+  }, [activeTab, session, canConfigure]);
 
   const permissions = useMemo(() => {
     const user = session?.user;
@@ -146,6 +148,8 @@ export function AppShell() {
               ? 'Preparação da Semana'
               : activeTab === 'relatorio'
               ? 'Consolidação Semanal'
+              : activeOperation === 'nova_jovens'
+              ? 'Operação Local Nova Jovens'
               : activeOperation === 'culto'
               ? 'Operação Local de Culto'
               : activeOperation === 'nova_teens'
@@ -181,7 +185,7 @@ export function AppShell() {
       </header>
 
       <nav className="nav-tabs" aria-label="Navegacao principal">
-        {permissions.canManageRodadas && <button type="button" className={activeTab === 'domingo' ? 'tab-active' : 'tab-button'} onClick={() => setActiveTab('domingo')}>Preparar domingo</button>}
+        {canPrepare && <button type="button" className={activeTab === 'domingo' ? 'tab-active' : 'tab-button'} onClick={() => setActiveTab('domingo')}>Preparar domingo</button>}
         {permissions.canViewPainel ? (
           <button
             type="button"
@@ -191,7 +195,7 @@ export function AppShell() {
             Painel
           </button>
         ) : null}
-        {permissions.canManageRodadas ? (
+        {canConfigure ? (
           <button
             type="button"
             className={activeTab === 'configuracao' ? 'tab-active' : 'tab-button'}
@@ -227,6 +231,7 @@ export function AppShell() {
 
       {activeTab !== 'usuarios' && activeTab !== 'relatorio' && activeTab !== 'domingo' ? (
         <div className="operation-switch" role="group" aria-label="Operação estatística">
+          <button type="button" hidden={!allowedOperations.includes('nova_jovens')} className={activeOperation === 'nova_jovens' ? 'tab-active' : 'tab-button'} onClick={() => setActiveOperation('nova_jovens')}>Nova Jovens</button>
           <button
             type="button"
             hidden={!allowedOperations.includes('senib')}
@@ -289,11 +294,11 @@ export function AppShell() {
       {activeTab === 'painel' && permissions.canViewPainel ? (
         <PainelTab key={activeOperation} user={session.user} operation={activeOperation} />
       ) : null}
-      {activeTab === 'configuracao' && permissions.canManageRodadas ? (
+      {activeTab === 'configuracao' && canConfigure ? (
         <ConfiguracaoTab key={activeOperation} user={session.user} operation={activeOperation} />
       ) : null}
       {activeTab === 'dashboard' ? <DashboardTab key={activeOperation} operation={activeOperation} /> : null}
-      {activeTab === 'domingo' && permissions.canManageRodadas ? <PrepararDomingo onConfigure={() => router.replace(`${pathname}?tab=configuracao&op=senib`)} /> : null}
+      {activeTab === 'domingo' && canPrepare ? <PrepararDomingo onConfigure={() => router.replace(`${pathname}?tab=configuracao&op=senib`)} /> : null}
       {activeTab === 'relatorio' && generalAccess ? <RelatorioTab /> : null}
       {activeTab === 'usuarios' && permissions.canViewUsers ? <UsersTab /> : null}
     </main>

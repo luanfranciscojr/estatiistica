@@ -50,7 +50,7 @@ export class RelatoriosService {
   async getSemanal(dataReferencia: string) {
     const aulaRef = this.formatAulaRef(dataReferencia);
 
-    const [rodada, cultos, novaTeens, umComDeus, novaBaby, novaInfantil, novaKids] = await Promise.all([
+    const [rodada, cultos, novaTeens, umComDeus, novaBaby, novaInfantil, novaKids, novaJovens] = await Promise.all([
       this.prisma.rodada.findFirst({
         where: { contagens: { some: { aulaRef } } },
         orderBy: { updatedAt: 'desc' },
@@ -86,6 +86,7 @@ export class RelatoriosService {
         'SELECT ordem, participantes, total FROM NovaKids WHERE dataReferencia = ? ORDER BY ordem ASC',
         dataReferencia,
       ),
+      this.prisma.novaJovens.findUnique({ where: { domingoReferencia: new Date(`${dataReferencia}T00:00:00Z`) } }),
     ]);
 
     const sessoes = [1, 2].map((sessaoSenib) => {
@@ -120,6 +121,7 @@ export class RelatoriosService {
     });
 
     const avisos: string[] = [];
+    if (!novaJovens) avisos.push('Nova Jovens não preparado para este fim de semana.');
     if (!rodada) avisos.push(`Nenhuma contagem SENIB encontrada para ${aulaRef}.`);
     for (const ordem of [1, 2]) {
       if (!cultos.some((item) => item.ordem === ordem)) {
@@ -145,6 +147,7 @@ export class RelatoriosService {
     return {
       data_referencia: dataReferencia,
       data_sabado: this.previousDay(dataReferencia),
+      nova_jovens: novaJovens ? { total: novaJovens.total, observacao: novaJovens.observacao, data_referencia: novaJovens.dataReferencia.toISOString().slice(0, 10) } : null,
       aula_ref: aulaRef,
       rodada: rodada ? { id: rodada.id, referencia: rodada.referencia } : null,
       senib: sessoes,

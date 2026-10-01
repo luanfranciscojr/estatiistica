@@ -87,6 +87,16 @@ Em **Usuarios**, os perfis `estatistica_culto`, `nova_teens`, `um_com_deus`, `no
 
 A migration `20260930120000_module_roles` adiciona e cadastra os novos perfis, sem precisar executar o seed em producao. O container da API ja executa `prisma migrate deploy` ao iniciar. Publique a API com a migration antes do frontend. Testes de permissoes: `npm run test:access -w @estatisticas-senib/api`.
 
+## Nova Jovens
+
+O modulo **Nova Jovens** tem um encontro por fim de semana. Em **Preparar domingo**, selecionar 04/10/2026 prepara o encontro de sabado 03/10/2026. Repetir a preparacao nao altera contagens, observacoes ou datas especiais existentes.
+
+Em **Configuracao > Nova Jovens**, informe o domingo de referencia, a data real do encontro (alteravel para eventos especiais) e uma observacao opcional, como Acampamento. Para editar um encontro, selecione-o na lista. O relatorio busca total, observacao e data automaticamente pelo domingo de referencia, sem somar esse total aos cultos de domingo.
+
+Em **Usuarios**, atribua o perfil `nova_jovens` para permitir consulta, lancamento, configuracao e preparacao apenas desse modulo. Esse perfil nao libera usuarios, relatorio geral nem outros modulos. Nao combine com perfis gerais se o acesso deve ser restrito.
+
+Publique primeiro a API: a migration `20261001120000_nova_jovens` cria a tabela e cadastra a permissao, sem seed adicional. O container executa `prisma migrate deploy` ao iniciar. Depois publique o frontend. Testes de backend (apos build): `node --test apps/api/tests/*.test.cjs`. O teste de navegador `apps/web/tests/nova-jovens.cjs` usa API simulada e aceita `TEST_URL`, `PLAYWRIGHT_MODULE` e `CHROME_PATH`.
+
 ## Observacao de banco
 
 O schema Prisma agora esta configurado para `MySQL`, como exigido no SDD. Para executar de ponta a ponta ainda e necessario apontar `DATABASE_URL` para uma instancia MySQL valida e aplicar as migrations quando a base estiver disponivel.

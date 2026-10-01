@@ -5,13 +5,11 @@ import { apiFetch } from '../../lib/api';
 import type { RelatorioSemanalPayload } from '../../types/contracts';
 
 type ManualValues = {
-  cultoNj: string;
   batismo1: string;
   batismo2: string;
 };
 
 const initialManualValues: ManualValues = {
-  cultoNj: '',
   batismo1: '0',
   batismo2: '0',
 };
@@ -46,11 +44,14 @@ function titleCase(value: string) {
 }
 
 function buildReport(payload: RelatorioSemanalPayload, manual: ManualValues) {
+  const nj = payload.nova_jovens;
+  const njDate = nj?.data_referencia ?? payload.data_sabado;
+  const weekday = new Date(`${njDate}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' });
   const lines = [
     '*NIB TABERNÁCULO*',
     '',
-    `*Sábado (${shortDate(payload.data_sabado)})*`,
-    `Culto NJ: ${manual.cultoNj.trim() || 'Não informado'}`,
+    `*${weekday.charAt(0).toUpperCase() + weekday.slice(1)} (${shortDate(njDate)})*`,
+    `Culto NJ: ${nj ? `${nj.total}${nj.observacao ? ` · ${nj.observacao}` : ''}` : 'Não informado'}`,
     '',
     '---',
     '',
@@ -200,18 +201,10 @@ export function RelatorioTab() {
               <p className="eyebrow">Preenchimento Manual</p>
               <h3>Dados complementares</h3>
             </div>
-            <span className="report-manual-badge">3 campos</span>
+            <span className="report-manual-badge">2 campos</span>
           </header>
 
-          <label className="field">
-            <span>Culto NJ de sábado</span>
-            <input
-              type="text"
-              placeholder="Ex.: Acampamento"
-              value={manual.cultoNj}
-              onChange={(event) => updateManual('cultoNj', event.target.value)}
-            />
-          </label>
+          <p>Nova Jovens é preenchido automaticamente com a contagem e a observação do encontro vinculado a este domingo.</p>
 
           <div className="report-period-block">
             <strong>Manhã</strong>

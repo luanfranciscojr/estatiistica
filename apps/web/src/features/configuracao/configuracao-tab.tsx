@@ -1,5 +1,7 @@
 'use client';
 
+import { NovaJovensTab } from '../nova-jovens/nova-jovens-tab';
+
 import { useEffect, useState } from 'react';
 import { CultoConfiguracaoTab } from './culto-configuracao-tab';
 import { NovaTeensConfiguracaoTab } from './nova-teens-configuracao-tab';
@@ -27,6 +29,7 @@ export function ConfiguracaoTab({
   user: SessionUser;
   operation: OperationMode;
 }) {
+  if (operation === 'nova_jovens') return <NovaJovensTab mode="configuracao" />;
   if (operation === 'culto') {
     return <CultoConfiguracaoTab user={user} />;
   }

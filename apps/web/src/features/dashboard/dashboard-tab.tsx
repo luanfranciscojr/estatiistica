@@ -1,5 +1,7 @@
 'use client';
 
+import { NovaJovensTab } from '../nova-jovens/nova-jovens-tab';
+
 import { useEffect, useState } from 'react';
 import { CultoDashboardTab } from './culto-dashboard-tab';
 import { NovaTeensDashboardTab } from './nova-teens-dashboard-tab';
@@ -81,6 +83,7 @@ function buildCompositionGradient(entries: Array<{ key: string; value: number; c
 }
 
 export function DashboardTab({ operation }: { operation: OperationMode }) {
+  if (operation === 'nova_jovens') return <NovaJovensTab mode="dashboard" />;
   if (operation === 'culto') {
     return <CultoDashboardTab />;
   }

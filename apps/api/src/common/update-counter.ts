@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CounterActionDto } from './counter-action.dto';
 
 const columns = {
+  NovaJovens: ['total'],
   Contagem: ['alunos', 'verdinhos', 'amarelinhos', 'professor'],
   Culto: ['total'], NovaTeens: ['teens', 'lideres'],
   UmComDeus: ['participantes', 'amarelinhos', 'lideres'],
@@ -11,6 +12,7 @@ const columns = {
 } as const;
 export type CounterTable = keyof typeof columns;
 const auditEntities: Record<CounterTable, string> = {
+  NovaJovens: 'nova_jovens',
   Contagem: 'contagem', Culto: 'culto', NovaTeens: 'nova_teens',
   UmComDeus: 'um-com-deus', NovaBaby: 'nova-baby', NovaInfantil: 'nova-infantil', NovaKids: 'nova-kids',
 };

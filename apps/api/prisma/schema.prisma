@@ -8,6 +8,7 @@ datasource db {
 }
 
 enum RoleCode {
+  nova_jovens
   admin
   estatistica
   verdinho
@@ -64,6 +65,8 @@ enum OperacaoContagem {
 }
 
 model User {
+  novaJovensCriados NovaJovens[] @relation("NovaJovensCreatedBy")
+  novaJovensAtualizados NovaJovens[] @relation("NovaJovensUpdatedBy")
   id           Int              @id @default(autoincrement())
   login        String           @unique @db.VarChar(120)
   passwordHash String           @db.VarChar(255)
@@ -216,6 +219,20 @@ model ContagemEvento {
   contagem      Contagem          @relation(fields: [contagemId], references: [id], onDelete: Cascade)
   user          User?             @relation(fields: [userId], references: [id])
   createdAt     DateTime          @default(now())
+}
+
+model NovaJovens {
+  id Int @id @default(autoincrement())
+  dataReferencia DateTime @unique @db.Date
+  domingoReferencia DateTime @unique @db.Date
+  observacao String? @db.VarChar(240)
+  total Int @default(0)
+  createdByUserId Int?
+  updatedByUserId Int?
+  createdByUser User? @relation("NovaJovensCreatedBy", fields: [createdByUserId], references: [id])
+  updatedByUser User? @relation("NovaJovensUpdatedBy", fields: [updatedByUserId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Culto {

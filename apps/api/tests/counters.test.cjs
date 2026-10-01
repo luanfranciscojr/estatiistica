@@ -25,6 +25,7 @@ function database(fields) {
 for (const [table, fields, category] of [
   ['Contagem', { alunos: 10, verdinhos: 0, amarelinhos: 0, professor: 0 }, 'alunos'],
   ['Culto', { total: 10 }, 'total'],
+  ['NovaJovens', { total: 10 }, 'total'],
   ['NovaTeens', { teens: 10, lideres: 0 }, 'teens'],
   ['UmComDeus', { participantes: 10, amarelinhos: 0, lideres: 0 }, 'participantes'],
   ...['NovaBaby', 'NovaInfantil', 'NovaKids'].map((table) => [table, { participantes: 10, lideres: 0 }, 'participantes']),

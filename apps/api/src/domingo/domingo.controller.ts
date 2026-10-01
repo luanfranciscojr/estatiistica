@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Module, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Body, Controller, Get, Module, Post, Query, UseGuards } from '@nestjs/common';
+import { saturdayForSunday } from '../nova-jovens/nova-jovens.module';
 import { ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsOptional, IsIn, IsString, Matches } from 'class-validator';
 import { AuthGuard } from '../common/auth.guard';
 import { RolesGuard } from '../common/roles.guard';
@@ -7,6 +8,7 @@ import { CurrentUser } from '../common/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const modules = {
+  nova_jovens: { table: 'NovaJovens', label: 'Nova Jovens' },
   culto: { table: 'Culto', label: 'Culto de domingo' },
   nova_teens: { table: 'NovaTeens', label: 'Nova Teens' },
   um_com_deus: { table: 'UmComDeus', label: 'Um com Deus' },
@@ -59,14 +61,23 @@ export class DomingoController {
   }
 
   @Get()
-  async status(@Query('data_referencia') date: string) {
-    const { rodada, salas } = await this.senib(date);
-    const items = await Promise.all(Object.entries(modules).map(async ([key, config]) => {
+  async status(@Query('data_referencia') date: string, @CurrentUser() user: { roles: string[] }) {
+    validateSunday(date);
+    const scoped = !user?.roles?.some((role) => ['admin', 'estatistica'].includes(role));
+    if (scoped && !user?.roles?.includes('nova_jovens')) throw new ForbiddenException();
+    const { rodada, salas } = scoped ? { rodada: null, salas: [] } : await this.senib(date);
+    const items = await Promise.all(Object.entries(modules).filter(([key]) => !scoped || key === 'nova_jovens').map(async ([key, config]) => {
+      if (key === 'nova_jovens') {
+        const [row] = await this.prisma.$queryRawUnsafe<Array<{ data_referencia: string }>>("SELECT DATE_FORMAT(dataReferencia, '%Y-%m-%d') AS data_referencia FROM NovaJovens WHERE domingoReferencia = ?", date);
+        const saturday = row?.data_referencia ?? saturdayForSunday(date);
+        return { key, label: config.label, disponivel: true, detalhe: `Encontro: ${saturday.split('-').reverse().join('/')} · sábado anterior por padrão. Datas especiais na configuração.`, turnos: [{ ordem: 1, preparado: !!row }] };
+      }
       const rows = await this.prisma.$queryRawUnsafe<Array<{ ordem: number; total: number }>>(
         `SELECT ordem, total FROM ${config.table} WHERE dataReferencia = ?`, date,
       );
       return { key, label: config.label, disponivel: true, turnos: [1, 2].map((ordem) => ({ ordem, preparado: rows.some((row) => row.ordem === ordem) })) };
     }));
+    if (scoped) return { data_referencia: date, items };
     return { data_referencia: date, items: [{
       key: 'senib', label: 'SENIB', disponivel: salas.length > 0,
       pode_criar_aulas: !!rodada && rodada.materias.length > 0,
@@ -80,12 +91,21 @@ export class DomingoController {
   }
 
   @Post('preparar')
-  async prepare(@Body() dto: PrepareSundayDto, @CurrentUser() user: { id: number }) {
-    const { rodada, salas, aulaRef } = await this.senib(dto.data_referencia);
+  async prepare(@Body() dto: PrepareSundayDto, @CurrentUser() user: { id: number; roles: string[] }) {
+    const scoped = !user?.roles?.some((role) => ['admin', 'estatistica'].includes(role));
+    if (scoped && (!user?.roles?.includes('nova_jovens') || dto.modulos.some((key) => key !== 'nova_jovens') || dto.todas_materias)) throw new ForbiddenException('Prepare apenas o seu módulo.');
+    const aulaRef = validateSunday(dto.data_referencia);
+    const { rodada, salas } = dto.modulos.includes('senib') ? await this.senib(dto.data_referencia) : { rodada: null, salas: [] };
     if (dto.todas_materias && (!dto.modulos.includes('senib') || !rodada)) throw new BadRequestException('A criação em lote exige uma rodada ativa do SENIB.');
     if (dto.modulos.includes('senib') && (!rodada || (!dto.todas_materias && !salas.length))) throw new BadRequestException('Configure as aulas do SENIB para este domingo antes de preparar.');
     await this.prisma.$transaction(async (tx) => {
       for (const key of dto.modulos) {
+        if (key === 'nova_jovens') {
+          await tx.novaJovens.upsert({ where: { domingoReferencia: new Date(`${dto.data_referencia}T00:00:00Z`) }, update: {}, create: {
+            domingoReferencia: new Date(`${dto.data_referencia}T00:00:00Z`), dataReferencia: new Date(`${saturdayForSunday(dto.data_referencia)}T00:00:00Z`), createdByUserId: user.id, updatedByUserId: user.id,
+          } });
+          continue;
+        }
         if (key === 'senib') {
           if (dto.todas_materias) {
             await tx.$queryRaw`SELECT id FROM Rodada WHERE id = ${rodada!.id} FOR UPDATE`;
@@ -129,7 +149,7 @@ export class DomingoController {
       }
       await tx.auditoria.create({ data: { actorUserId: user.id, acao: 'domingo.prepare', entidade: 'domingo', entidadeId: dto.data_referencia, payloadJson: { modulos: dto.modulos, todas_materias: dto.todas_materias ?? false } } });
     });
-    return this.status(dto.data_referencia);
+    return this.status(dto.data_referencia, user);
   }
 }
 

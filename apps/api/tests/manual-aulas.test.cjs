@@ -13,7 +13,7 @@ test('lesson dates are real Sundays, deduplicated and ordered', () => {
 test('imported active rounds expose bulk lesson preparation', async () => {
   const controller = new DomingoController({ $queryRawUnsafe: async () => [] });
   controller.senib = async () => ({ rodada: { origem: 'api_nib', referencia: '2026.4', materias: [{ id: 1 }] }, salas: [] });
-  const result = await controller.status('2026-10-04');
+  const result = await controller.status('2026-10-04', { roles: ['admin'] });
   assert.equal(result.items[0].pode_criar_aulas, true);
   assert.equal(result.items[0].total_materias, 1);
 });
@@ -58,21 +58,21 @@ test('Sunday bulk setup adds the date to every subject once and preserves attend
   controller.senib = async () => ({ rodada, salas: [], aulaRef: '04/10/2026' });
   controller.status = async () => ({});
   const dto = { data_referencia: '2026-10-04', modulos: ['senib'], todas_materias: true };
-  await controller.prepare(dto, { id: 1 });
-  await controller.prepare(dto, { id: 1 });
+  await controller.prepare(dto, { id: 1, roles: ['admin'] });
+  await controller.prepare(dto, { id: 1, roles: ['admin'] });
   assert.equal(counts.get('2:04/10/2026'), 37);
   assert.equal(counts.size, 2);
   for (const materia of rodada.materias) assert.deepEqual(materia.datasAulasJson, ['04/10/2026']);
   rodada.origem = 'api_nib';
-  await controller.prepare(dto, { id: 1 });
+  await controller.prepare(dto, { id: 1, roles: ['admin'] });
   assert.equal(counts.get('2:04/10/2026'), 37);
   assert.equal(counts.size, 2);
   rodada.materias.push({ id: 6, materia: 'Outra', sala: '2', sessaoSenib: 1, datasAulasJson: [] });
-  await assert.rejects(controller.prepare(dto, { id: 1 }), { status: 400 });
+  await assert.rejects(controller.prepare(dto, { id: 1, roles: ['admin'] }), { status: 400 });
   assert.equal(counts.size, 2);
   rodada.materias.pop();
   rodada.status = 'encerrada';
-  await assert.rejects(controller.prepare(dto, { id: 1 }), { status: 400 });
+  await assert.rejects(controller.prepare(dto, { id: 1, roles: ['admin'] }), { status: 400 });
 });
 
 test('manual creation stores the subject calendar and separate counts, never consolidated', async () => {

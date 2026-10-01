@@ -16,6 +16,7 @@ import { RelatoriosModule } from './relatorios/relatorios.module';
 import { SystemModule } from './system/system.module';
 import { UsersModule } from './users/users.module';
 import { DomingoModule } from './domingo/domingo.controller';
+import { NovaJovensModule } from './nova-jovens/nova-jovens.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { DomingoModule } from './domingo/domingo.controller';
     AuthModule,
     UsersModule,
     DomingoModule,
+    NovaJovensModule,
     CultosModule,
     NovaTeensModule,
     ProgramasInfantisModule,

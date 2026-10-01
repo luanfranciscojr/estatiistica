@@ -1,5 +1,7 @@
 'use client';
 
+import { NovaJovensTab } from '../nova-jovens/nova-jovens-tab';
+
 import { useDeferredValue, useEffect, useRef, useState } from 'react';
 import { CultoPainelTab } from './culto-painel-tab';
 import { NovaTeensPainelTab } from './nova-teens-painel-tab';
@@ -18,6 +20,7 @@ import {
 } from '../../types/contracts';
 
 export function PainelTab({ user, operation }: { user: SessionUser; operation: OperationMode }) {
+  if (operation === 'nova_jovens') return <NovaJovensTab mode="painel" />;
   if (operation === 'culto') {
     return <CultoPainelTab user={user} />;
   }
